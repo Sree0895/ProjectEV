@@ -1,0 +1,12 @@
+{
+	"evChargingStationInfo" :[
+	{
+		"evId" : "EV002324",
+		"evLat" : "123.89",
+		"evLon" : "88.89",
+		"evStatus" : "Good",
+		"evSWVer": "1.00"
+	}
+	]
+
+}
