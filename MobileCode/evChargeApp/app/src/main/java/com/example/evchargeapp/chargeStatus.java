@@ -51,13 +51,13 @@ public class chargeStatus extends AppCompatActivity {
         setContentView(R.layout.activity_charge_status);
 
 //        host = "tcp://" + "192.168.1.21" + ":" + "1883";
-//        clientId = "";
+        clientId = "";
 
         host = "tcp://" + config.getHost() + ":" + config.getPort();
-        clientId = config.getClientId();
+        //clientId = config.getClientId();
 
         mqttInstance = new mqttClass(getApplicationContext(), host, clientId, "pi", passWord, mHandler);
-
+        mqttInstance.mqttConnect("");
         mGroup= findViewById(R.id.group);
         mGroup.setVisibility(View.INVISIBLE);
         mProgessBar = findViewById(R.id.progressBar);
@@ -81,7 +81,6 @@ public class chargeStatus extends AppCompatActivity {
         mControlBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                JSONObject obj1 = new JSONObject();
                 if( true == mControlToggleState )
                 {
                     mScanBtn.setVisibility(View.INVISIBLE);
@@ -96,7 +95,7 @@ public class chargeStatus extends AppCompatActivity {
                 {
                     mScanBtn.setVisibility(View.VISIBLE);
                     mqttInstance.unsubscribeTopic(SubChargeControlTopic);
-                    mControlToggleState = false;
+                    mControlToggleState = true;
                     mControlBtn.setImageResource(R.drawable.charge_on);
                     requestChargeOff();
                     Toast.makeText(getBaseContext(), "Turned Off", Toast.LENGTH_SHORT).show();
@@ -135,6 +134,7 @@ public class chargeStatus extends AppCompatActivity {
             else
             {
                 extractScanData(intentResult.getContents());
+                //mGroup.setVisibility(View.VISIBLE);
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
@@ -163,7 +163,7 @@ public class chargeStatus extends AppCompatActivity {
             {
                 mMqttRxdata = bundle.getString("mqttRxData");
                 extractData(mMqttRxdata);
-                //Log.i("Test", "Mqtt Data: " + mMqttRxdata );
+                Log.i("Test", "Mqtt Data: " + mMqttRxdata );
             }
         }
     };
@@ -181,9 +181,10 @@ public class chargeStatus extends AppCompatActivity {
                     mStartTimeTextVal.setText(object.getString("startTime"));
                     mEndTimeTextVal.setText(object.getString("endTime"));
                     double chargeLevel = object.getDouble("currCharge") * 100;
-                    if(chargeLevel >= 100)
+                    if(chargeLevel >= 100) {
                         mControlBtn.setImageResource(R.drawable.charge_on);
-                    mControlToggleState = true;
+                        mControlToggleState = true;
+                    }
                     mChargeStatusText.setText(Integer.toString((int)chargeLevel) + "%") ;
                     mProgessBar.setProgress((int)chargeLevel);
                     break;
@@ -205,9 +206,12 @@ public class chargeStatus extends AppCompatActivity {
             JSONObject object = array.getJSONObject(0);
             //SubChargeControlTopic = "topic/"  + object.getString("evcsManufacturer") + "/" + object.getString("evcsId") +  "/userData/" + "ssmr";
             SubChargeControlTopic = "topic/userData/"  + object.getString("evcsManufacturer") + "/" +
-                    object.getString("evcsId") +  "/" + object.getString("evcsState") + object.getString("evcsDistrict") +
+                     object.getString("evcsState") +  "/" + object.getString("evcsDistrict") +  "/" +
+                     object.getString("evcsName") +  "/" + object.getString("evcsId") +  "/" +
                     config.getUserId();
+            Log.i("TAG", "extractScanData: " + SubChargeControlTopic);
             requestEVCSservice(object);
+            mqttInstance.subscribeTopic(SubChargeControlTopic);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -219,9 +223,10 @@ public class chargeStatus extends AppCompatActivity {
         JSONObject obj1 = new JSONObject();
         try {
             PubChargeControlTopic = "topic/userService/"  + object.getString("evcsManufacturer") + "/" +
-                    object.getString("evcsState") + object.getString("evcsDistrict") + object.getString("evcsId") +  "/" +
+                    object.getString("evcsState") + "/" + object.getString("evcsDistrict") + "/" + object.getString("evcsName") +  "/" + object.getString("evcsId") +  "/" +
                     config.getUserId() +  "/" + config.getVehicleId();
             obj1.put("code", "3001");
+            obj1.put("authReq", "true");
             obj1.put("user", config.getUserId() );
             obj1.put("evNumber", config.getVehicleId());
             obj1.put("evChargerType", config.getChargerType());
@@ -230,7 +235,7 @@ public class chargeStatus extends AppCompatActivity {
             e.printStackTrace();
         }
         if(mqttInstance != null)
-            mqttInstance.publishMessage("topic/Geeks/EV002324/userService/ssmr/TS15EC1234", obj1.toString());
+            mqttInstance.publishMessage(PubChargeControlTopic, obj1.toString());
     }
 
     private static void requestChargeOn()
@@ -238,13 +243,13 @@ public class chargeStatus extends AppCompatActivity {
         JSONObject obj1 = new JSONObject();
         try {
             obj1.put("code", "101");
-            obj1.put("user", "ssmr");
-            obj1.put("evNumber", "TS15EC1234");
+            obj1.put("user", config.getUserId() );
+            obj1.put("evNumber", config.getVehicleId());
         } catch (JSONException e) {
             e.printStackTrace();
         }
         if(mqttInstance != null)
-            mqttInstance.publishMessage("topic/Geeks/EV002324/userService/ssmr/TS15EC1234", obj1.toString());
+           mqttInstance.publishMessage(PubChargeControlTopic, obj1.toString());
     }
 
     private static void requestChargeOff()
@@ -252,13 +257,13 @@ public class chargeStatus extends AppCompatActivity {
         JSONObject obj1 = new JSONObject();
         try {
             obj1.put("code", "102");
-            obj1.put("user", "ssmr");
-            obj1.put("evNumber", "TS15EC1234");
+            obj1.put("user", config.getUserId() );
+            obj1.put("evNumber", config.getVehicleId());
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
         if(mqttInstance != null)
-            mqttInstance.publishMessage("topic/Geeks/EV002324/userService/ssmr/TS15EC1234", obj1.toString());
+            mqttInstance.publishMessage(PubChargeControlTopic, obj1.toString());
     }
 }

@@ -94,7 +94,7 @@ public class config extends AppCompatActivity {
             public void onClick(View v) {
 
                 mUserId = mUserIdEditText.getText().toString();
-                mVehicleId = mVehicleIdText.getText().toString();
+                mVehicleId = mVehicleIdEditText.getText().toString();
                 mEvVendor = mManufacturerEditText.getText().toString();
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
