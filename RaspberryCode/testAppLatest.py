@@ -165,15 +165,13 @@ class mqttComm():
         # reconnect then subscriptions will be renewed.
         if rc==0:
             mqttComm.client.connected_flag=True
-            topic = "topic/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsId"]) + "/" + "userService" + "/" + "#"
-            #print(topic)
+            topic = "topic/userService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) + "/"+ str(evcsInfo["evcsId"]) + "/" + "#"
             mqttComm.client.subscribe(topic)
         else:
             mqttComm.client.connected_flag=False
 
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self,client, userdata, msg):
-        print(msg.payload)
         self.taskObj = json.loads(msg.payload)
         self.taskObj["commType"]= "mqtt"
         self.taskObj["transactionType"]= "rx"        
@@ -188,7 +186,8 @@ def BackendParser(msg):
         Backend.userName = msg["user"]
         Backend.evNumber = msg["evNumber"]
         Backend.evCharge = "On"
-        Backend.requestStatus = "new"
+        if(Backend.requestStatus == ""):
+            Backend.requestStatus = "new"
     elif(msg["code"] == "102"):
         Backend.userName = msg["user"]
         Backend.evNumber = msg["evNumber"]
@@ -207,6 +206,11 @@ def BackendParser(msg):
         Backend.currAmpere = msg["currAmpere"]
     elif(msg["code"] == "5004"):
         Backend.batDect = msg["batDect"]
+    elif(msg["code"] == "3001"):
+        print( msg["code"] + msg["user"] + msg["evNumber"] + msg["authReq"] ) 
+        Backend.userName = msg["user"]
+        Backend.evNumber = msg["evNumber"]
+        Backend.authenticateRequest = msg["authReq"]
     else:
         print("Unknown code")
         
@@ -306,6 +310,7 @@ class Backend(QObject):
     startTime = ""
     endTime = ""
     requestStatus = ""
+    authenticateRequest = ""
     
     def __init__(self):
         super().__init__()
@@ -342,6 +347,12 @@ class Backend(QObject):
         self.updated.emit(curr_time)
               
         self.periodicTcpData()
+        
+        if(Backend.authenticateRequest == "true"):
+            Backend.authenticateRequest = ""
+            self.userName = Backend.userName
+            self.authResp()
+            
         if(Backend.chargeVal != None):
             self.chargeVal = float(Backend.chargeVal )
             if(Backend.requestStatus == "new"):
@@ -396,11 +407,23 @@ class Backend(QObject):
         self.dispUserName(self.currUserInfo.userName)      
         self.dispEvNumber(self.currUserInfo.evNumber)                
                     
+
+    def authResp(self):
+        TaskDict ={}
+        TaskDict["commType"]= "mqtt"
+        TaskDict["transactionType"]= "tx"
+        pubTopic = "topic/userData/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) + "/"+ str(evcsInfo["evcsId"]) + "/" + str(self.userName) 
+        TaskDict["topic"]= pubTopic
+        TaskDict["code"]= "3002"
+        TaskStr = json.dumps(TaskDict, indent = 4)
+        TaskObject = json.loads(TaskStr)
+        self.scheduler.addToTaskQueue(TaskObject)
+        
     def periodicUserData(self):
         TaskDict ={}
         TaskDict["commType"]= "mqtt"
         TaskDict["transactionType"]= "tx"
-        pubTopic = "topic/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsId"]) + "/" + "userData" + "/" + str(self.currUserInfo.getUserName()) 
+        pubTopic = "topic/userData/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) + "/"+ str(evcsInfo["evcsId"]) + "/" + str(self.currUserInfo.getUserName()) 
         TaskDict["topic"]= pubTopic
         TaskDict["code"]= "3003"
         TaskDict["user"]= self.currUserInfo.getUserName()
