@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<resources>
+    <string-array>
+        <item>Adilabad</item>
+        <item>Bhadradri</item>
+        <item>Hanamkonda</item>
+        <item>Hyderabad</item>
+        <item>Jagitial</item>
+        <item>Jangaon</item>
+        <item>Jayashankar</item>
+        <item>Jogulamba</item>
+        <item>Kamareddy</item>
+        <item>Karimnagar</item>
+        <item>Khammam</item>
+        <item>Kumuram</item>
+        <item>Mahabubabad</item>
+        <item>Mahabubnagar</item>
+        <item>Mancherial</item>
+        <item>Medak</item>
+        <item>Medchal</item>
+        <item>Mulugu</item>
+        <item>Nagarkurnool</item>
+        <item>Narayanpet</item>
+        <item>Nalgonda</item>
+        <item>Nirmal</item>
+        <item>Nizamabad</item>
+        <item>Peddapalli</item>
+        <item>Rajanna</item>
+        <item>Ranga Reddy</item>
+        <item>Sangareddy</item>
+        <item>Siddipet</item>
+        <item>Suryapet</item>
+        <item>Vikarabad</item>
+        <item>Wanaparthy</item>
+        <item>Warangal</item>
+        <item>Yadadri</item>
+    </string-array>
+
+
+</resources>

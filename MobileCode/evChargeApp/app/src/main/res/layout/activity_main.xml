@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background2"
+    tools:context=".MainActivity">
+
+    <ImageView
+        android:id="@+id/chargenowimage"
+        android:layout_width="121dp"
+        android:layout_height="115dp"
+        android:layout_marginStart="100dp"
+        android:layout_marginEnd="250dp"
+        android:layout_marginTop="60dp"
+        app:srcCompat="@drawable/chargenow"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/chargenowBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="200dp"
+        android:layout_marginEnd="50dp"
+        android:layout_marginTop="100dp"
+        android:text="Charge Now"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+
+    <ImageView
+        android:id="@+id/bookingslotimage"
+        android:layout_width="157dp"
+        android:layout_height="171dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="250dp"
+        android:layout_marginTop="20dp"
+        app:srcCompat="@drawable/bookingslot"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/chargenowimage" />
+
+
+    <Button
+        android:id="@+id/bookSlotbtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="204dp"
+        android:layout_marginTop="100dp"
+        android:text="Book Slot"
+        app:layout_constraintLeft_toRightOf="@+id/bookingslotimage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/chargenowBtn" />
+
+    <ImageView
+        android:id="@+id/locateimage"
+        android:layout_width="148dp"
+        android:layout_height="168dp"
+        app:srcCompat="@drawable/nearby"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="250dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bookingslotimage" />
+    <Button
+        android:id="@+id/locateBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="204dp"
+        android:layout_marginTop="130dp"
+        android:text="EV stations"
+        app:layout_constraintLeft_toRightOf="@+id/locateimage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bookSlotbtn" />
+
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

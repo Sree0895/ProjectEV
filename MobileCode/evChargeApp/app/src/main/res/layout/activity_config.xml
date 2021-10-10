@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background2"
+    tools:context=".config">
+
+    <TextView
+        android:id="@+id/settingsTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="160dp"
+        android:layout_marginStart="160dp"
+        android:layout_marginTop="60dp"
+        android:text="Settings"
+        android:textColor="#BE28D5A3"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"  />
+
+    <TextView
+        android:id="@+id/userIdText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="160dp"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="120dp"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:text="USER:"
+        android:textColor="#FFFF00"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/userIdEditText"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:text="ssmr"
+        android:textColor="#03A9F4"
+        android:textSize="15sp"
+        android:layout_marginTop="110dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginStart="150dp"
+        android:layout_marginRight="50dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/userIdText"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/vehicleIdText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="160dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:text="VEHICLE ID:"
+        android:textColor="#FFFF00"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/userIdText" />
+
+    <EditText
+        android:id="@+id/vehicleIdEditText"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:text="TS15EC1100"
+        android:textColor="#03A9F4"
+        android:textSize="15sp"
+        android:layout_marginTop="35dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginStart="150dp"
+        android:layout_marginRight="50dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/userIdText"
+        app:layout_constraintTop_toTopOf="@+id/userIdEditText"/>
+
+    <TextView
+        android:id="@+id/manufacturerIdText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="160dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:text="EVCS Vendor:"
+        android:textColor="#FFFF00"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/vehicleIdText" />
+
+    <EditText
+        android:id="@+id/manufacturerEditText"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:text="Geeks"
+        android:textColor="#03A9F4"
+        android:textSize="15sp"
+        android:layout_marginTop="35dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginStart="150dp"
+        android:layout_marginRight="50dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/manufacturerIdText"
+        app:layout_constraintTop_toTopOf="@+id/vehicleIdEditText"/>
+
+    <TextView
+        android:id="@+id/chargerTypeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="160dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:text="CHARGER TYPE:"
+        android:textColor="#FFFF00"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/manufacturerIdText" />
+
+    <EditText
+        android:id="@+id/chargerTypeEditText"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:text="Fast charging"
+        android:textColor="#03A9F4"
+        android:textSize="15sp"
+        android:layout_marginTop="35dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginStart="150dp"
+        android:layout_marginRight="50dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/chargerTypeText"
+        app:layout_constraintTop_toTopOf="@+id/manufacturerEditText"/>
+
+    <TextView
+        android:id="@+id/vehicleTypeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="160dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:text="VEHICLE CATEGORY:"
+        android:textColor="#FFFF00"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/chargerTypeText" />
+
+    <EditText
+        android:id="@+id/vehicleTypeEditText"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:text="Four-wheeler"
+        android:textColor="#03A9F4"
+        android:textSize="15sp"
+        android:layout_marginTop="35dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginStart="150dp"
+        android:layout_marginRight="50dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/vehicleTypeText"
+        app:layout_constraintTop_toTopOf="@+id/chargerTypeEditText"/>
+
+    <Button
+        android:id="@+id/next_button"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginBottom="20dp"
+        android:background="#3F51B5"
+        android:text="Next"
+        android:textColor="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
