@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,13 +28,16 @@ import org.json.JSONObject;
 public class chargeStatus extends AppCompatActivity {
 
     static ProgressBar mProgessBar;
-    ImageButton mScanBtn;
+    static ImageButton mScanBtn;
     static ImageButton mControlBtn;
     static TextView mChargeStatusText;
     static TextView mUserText,mUserTextVal;
     static TextView mVehicleNumberText,mVehicleNumberTextVal;
     static TextView mStartTimeText,mStartTimeTextVal;
     static TextView mEndTimeText,mEndTimeTextVal;
+    static TextView mChargeConText,mChargeConTextVal;
+    static TextView mCostText,mCostTextVal;
+    static ImageView mBatImageView;
     private static Group mGroup;
     static String SubChargeControlTopic = "";
     static String PubChargeControlTopic = "";
@@ -50,11 +54,8 @@ public class chargeStatus extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_charge_status);
 
-//        host = "tcp://" + "192.168.1.21" + ":" + "1883";
         clientId = "";
-
         host = "tcp://" + config.getHost() + ":" + config.getPort();
-        //clientId = config.getClientId();
 
         mqttInstance = new mqttClass(getApplicationContext(), host, clientId, "pi", passWord, mHandler);
         mqttInstance.mqttConnect("");
@@ -64,18 +65,22 @@ public class chargeStatus extends AppCompatActivity {
         mProgessBar.setProgress(0);
         mProgessBar.setVisibility(View.INVISIBLE);
 
-
+        mBatImageView = findViewById(R.id.imageView2);
         mChargeStatusText= findViewById(R.id.chargeValText);
         mChargeStatusText.setText("----");
         mUserText= findViewById(R.id.userNameText);
         mVehicleNumberText= findViewById(R.id.vehicleNumberText);
         mStartTimeText= findViewById(R.id.startTimeText);
         mEndTimeText= findViewById(R.id.endTimeText);
+        mChargeConText= findViewById(R.id.chargeConText);
+        mCostText= findViewById(R.id.costText);
 
         mUserTextVal= findViewById(R.id.userNameTextVal);
         mVehicleNumberTextVal= findViewById(R.id.vehicleNumberTextVal);
         mStartTimeTextVal= findViewById(R.id.startTimeTextVal);
         mEndTimeTextVal= findViewById(R.id.endTimeTextVal);
+        mChargeConTextVal= findViewById(R.id.chargeConTextVal);
+        mCostTextVal= findViewById(R.id.costTextVal);
 
         mControlBtn = findViewById(R.id.controlbtn);
         mControlBtn.setOnClickListener(new View.OnClickListener() {
@@ -93,7 +98,6 @@ public class chargeStatus extends AppCompatActivity {
                 }
                 else
                 {
-                    mScanBtn.setVisibility(View.VISIBLE);
                     mqttInstance.unsubscribeTopic(SubChargeControlTopic);
                     mControlToggleState = true;
                     mControlBtn.setImageResource(R.drawable.charge_on);
@@ -134,7 +138,6 @@ public class chargeStatus extends AppCompatActivity {
             else
             {
                 extractScanData(intentResult.getContents());
-                //mGroup.setVisibility(View.VISIBLE);
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
@@ -163,7 +166,6 @@ public class chargeStatus extends AppCompatActivity {
             {
                 mMqttRxdata = bundle.getString("mqttRxData");
                 extractData(mMqttRxdata);
-                Log.i("Test", "Mqtt Data: " + mMqttRxdata );
             }
         }
     };
@@ -180,16 +182,27 @@ public class chargeStatus extends AppCompatActivity {
                     mVehicleNumberTextVal.setText(object.getString("evNumber"));
                     mStartTimeTextVal.setText(object.getString("startTime"));
                     mEndTimeTextVal.setText(object.getString("endTime"));
+                    String temp = object.getString("evChargeOption");
+                    if(temp.compareTo("0") == 0)
+                        mChargeConTextVal.setText("UserControl");
+                    else if(temp.compareTo("1") == 0)
+                        mChargeConTextVal.setText("Time-Based");
+                    else if(temp.compareTo("2") == 0)
+                        mChargeConTextVal.setText("Percent-Based");
+                    mCostTextVal.setText("TBD");
                     double chargeLevel = object.getDouble("currCharge") * 100;
-                    if(chargeLevel >= 100) {
-                        mControlBtn.setImageResource(R.drawable.charge_on);
-                        mControlToggleState = true;
-                    }
                     mChargeStatusText.setText(Integer.toString((int)chargeLevel) + "%") ;
                     mProgessBar.setProgress((int)chargeLevel);
                     break;
                 case 3002:
                     mGroup.setVisibility(View.VISIBLE);
+                    mScanBtn.setVisibility(View.INVISIBLE);
+                    break;
+                case 3005:
+                    mControlBtn.setImageResource(R.drawable.charge_on);
+                    mControlToggleState = true;
+                    mGroup.setVisibility(View.INVISIBLE);
+                    mScanBtn.setVisibility(View.VISIBLE);
                     break;
                 default:
                     break;
@@ -204,18 +217,15 @@ public class chargeStatus extends AppCompatActivity {
         try {
             JSONArray array = new JSONArray( "["+ str + "]");
             JSONObject object = array.getJSONObject(0);
-            //SubChargeControlTopic = "topic/"  + object.getString("evcsManufacturer") + "/" + object.getString("evcsId") +  "/userData/" + "ssmr";
             SubChargeControlTopic = "topic/userData/"  + object.getString("evcsManufacturer") + "/" +
                      object.getString("evcsState") +  "/" + object.getString("evcsDistrict") +  "/" +
                      object.getString("evcsName") +  "/" + object.getString("evcsId") +  "/" +
                     config.getUserId();
-            Log.i("TAG", "extractScanData: " + SubChargeControlTopic);
             requestEVCSservice(object);
             mqttInstance.subscribeTopic(SubChargeControlTopic);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
     }
 
     private static void requestEVCSservice(JSONObject object)
@@ -231,6 +241,9 @@ public class chargeStatus extends AppCompatActivity {
             obj1.put("evNumber", config.getVehicleId());
             obj1.put("evChargerType", config.getChargerType());
             obj1.put("evVehicleType", config.getVehicleType());
+            obj1.put("evChargeOption", chargeType.getOption());
+            obj1.put("evChargeOptionParam", chargeType.getOptionParam());
+            //Log.i("TestReq", "requestEVCSservice: " + obj1.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }

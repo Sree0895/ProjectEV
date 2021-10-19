@@ -23,7 +23,7 @@ public class config extends AppCompatActivity {
     EditText mUserIdEditText,mVehicleIdEditText,mManufacturerEditText,mChargerTypeEditText,mVehicleTypeEditText;
 
     private static String TAG = "ConfigActivity";
-    private static String mHost = "192.168.1.21"; //""au2f39iu6fuus-ats.iot.us-east-2.amazonaws.com";
+    private static String mHost = "192.168.1.34"; //""au2f39iu6fuus-ats.iot.us-east-2.amazonaws.com";
     private static String mPort = "1883";
     private static String mClientId = "awsMobile1";
     private static String mUserId = null;
@@ -96,6 +96,8 @@ public class config extends AppCompatActivity {
                 mUserId = mUserIdEditText.getText().toString();
                 mVehicleId = mVehicleIdEditText.getText().toString();
                 mEvVendor = mManufacturerEditText.getText().toString();
+                mChargerType = mChargerTypeEditText.getText().toString();
+                mVehicleType = mVehicleTypeEditText.getText().toString();
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
                 finish();

@@ -17,10 +17,15 @@ TCP_IP_HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 TCP_IP_PORT = 9999         # Port to listen on (non-privileged ports are > 1023)
 
 class Backend(QObject):
+    stateOfCharge = 0.0
+    batVolt = 0.0
+    avgCurr = 0.0
+    remCapacity = 0.0
+    fullCapacity = 0.0
+    avgPwr = 0.0
+    stateOfHealth = 0.0
     chargeValue = 0.1
     batDect=0
-    currVolt=2.0
-    currAmpere=0.1
     def __init__(self):
         super().__init__()
         
@@ -39,14 +44,38 @@ class Backend(QObject):
         
     def update_time(self):
         if(Backend.batDect == 1):
-            Backend.chargeValue= Backend.chargeValue+ 0.01
-            if(Backend.chargeValue > 1.0):
-                Backend.chargeValue = 1.0
+            Backend.stateOfCharge= Backend.stateOfCharge+ 0.01
+            if(Backend.stateOfCharge > 1.0):
+                Backend.stateOfCharge = 1.0
             
     def executeTask(self):    
          # Execute the task
-        self.scheduler.executeFromTaskQueue()            
-
+        self.scheduler.executeFromTaskQueue()
+    
+    @staticmethod
+    def getStateOfCharge():
+        return Backend.stateOfCharge
+    @staticmethod    
+    def getBatVoltage():
+        return Backend.batVolt
+    @staticmethod
+    def getBatAvgCurrent():
+        return Backend.avgCurr
+    @staticmethod
+    def getBatRemainingCapacity():
+        return Backend.remCapacity
+    @staticmethod
+    def getBatFullCapacity():
+        return Backend.fullCapacity
+    @staticmethod
+    def getBatAvgPower():
+        return Backend.avgPwr
+    @staticmethod
+    def getStateOfHealth():
+        return Backend.stateOfHealth
+    @staticmethod
+    def getBatDect():
+        return Backend.batDect    
 class taskScheduler():
     global qTaskList
 
@@ -88,7 +117,8 @@ def BackendParser(msg):
         TaskDict["transactionType"]= "tx"
         TaskDict["code"]= "5001"     
         TaskDict["evCharge"]= "On"
-        Backend.chargeValue = random.uniform(0, 1)
+        if(Backend.batDect == 0): 
+            Backend.stateOfCharge = random.uniform(0, 1)
         TaskDict["TimeStamp"]= str((int)(time.time()))       
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
@@ -110,8 +140,14 @@ def BackendParser(msg):
         TaskDict["commType"]= "tcp"
         TaskDict["transactionType"]= "tx"
         TaskDict["code"]= "5003"
-        TaskDict["chargeVal"]= str(round(Backend.chargeValue,2))        
-        TaskDict["currAmpere"]= str(Backend.currAmpere)
+        TaskDict["batDect"]= str(Backend.getBatDect())
+        TaskDict["soc"]= str(round(Backend.getStateOfCharge(),2))
+        TaskDict["batVolt"]= str(round(Backend.getBatVoltage(),2))        
+        TaskDict["avgCurr"]= str(round(Backend.getBatAvgCurrent(),2))
+        TaskDict["remCapacity"]= str(round(Backend.getBatRemainingCapacity(),2))
+        TaskDict["fullCapacity"]= str(round(Backend.getBatFullCapacity(),2))
+        TaskDict["avgPwr"]= str(round(Backend.getBatAvgPower(),2))
+        TaskDict["soh"]= str(round(Backend.getStateOfHealth(),2))
         TaskDict["TimeStamp"]= str((int)(time.time()))
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
@@ -191,7 +227,7 @@ class tcpServerClient():
     def sendTcpData(data): 
         if(tcpServerClient.clientsocket != None):
             msg = json.dumps(data, indent=4)
-            print(msg)
+            #print(msg)
             tcpServerClient.clientsocket.send(msg.encode('ascii'))    
 
 tcpCommInstance = tcpServerClient("server")

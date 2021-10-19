@@ -14,7 +14,7 @@
         android:layout_height="100dp"
         android:layout_marginStart="160dp"
         android:layout_marginEnd="160dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="10dp"
         android:text="Scan"
         android:src="@drawable/scan"
         android:background="@android:color/transparent"
@@ -29,7 +29,7 @@
         android:id="@+id/chargeValText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="35dp"
         android:layout_marginLeft="40dp"
         android:text="0%"
         android:textSize="70sp"
@@ -37,22 +37,33 @@
         android:textColor="#00FF00"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/progressBar"
-        app:layout_constraintTop_toBottomOf="@+id/scanBtn" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ProgressBar
         android:id="@+id/progressBar"
+        android:layout_width="50dp"
+        android:layout_height="108dp"
+        android:layout_marginTop="37dp"
+        android:layout_marginLeft="45dp"
+        android:layout_marginRight="65dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/chargeValText"
+        app:layout_constraintTop_toTopOf="parent"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:max="100"
+        android:progressDrawable="@drawable/custom_progess" />
+
+    <ImageView
+        android:id="@+id/imageView2"
         android:layout_width="87dp"
-        android:layout_height="130dp"
-        android:layout_marginTop="10dp"
+        android:layout_height="125dp"
+        android:layout_marginTop="31dp"
         android:layout_marginLeft="45dp"
         android:layout_marginRight="50dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toRightOf="@+id/chargeValText"
-        app:layout_constraintTop_toBottomOf="@+id/scanBtn"
-        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:max="100"
-        android:progressDrawable="@drawable/custom_progess"
-        />
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/battery2" />
 
     <TextView
         android:id="@+id/userNameText"
@@ -70,7 +81,7 @@
         android:id="@+id/vehicleNumberText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:layout_marginLeft="50dp"
         android:text="Vehicle Number:"
         android:textColor="@color/cardview_light_background"
@@ -82,7 +93,7 @@
         android:id="@+id/startTimeText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:layout_marginLeft="50dp"
         android:text="Start Time:"
         android:textColor="@color/cardview_light_background"
@@ -95,13 +106,37 @@
         android:id="@+id/endTimeText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:layout_marginLeft="50dp"
         android:text="End time :"
         android:textColor="@color/cardview_light_background"
         android:textSize="15sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/startTimeText" />
+
+    <TextView
+        android:id="@+id/chargeConText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="50dp"
+        android:text="Charge Control :"
+        android:textColor="@color/cardview_light_background"
+        android:textSize="15sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/endTimeText" />
+
+    <TextView
+        android:id="@+id/costText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="50dp"
+        android:text="Cost :"
+        android:textColor="@color/cardview_light_background"
+        android:textSize="15sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/chargeConText" />
 
     <TextView
         android:id="@+id/userNameTextVal"
@@ -111,38 +146,36 @@
         android:layout_marginLeft="50dp"
         android:text="----"
         android:textStyle="bold"
-        android:layout_marginEnd="100dp"
         android:textColor="#00CFFF"
         android:textSize="15sp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/userNameText"
         app:layout_constraintTop_toBottomOf="@+id/chargeValText" />
 
     <TextView
         android:id="@+id/vehicleNumberTextVal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="20dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="8dp"
         android:text="----"
-        android:textStyle="bold"
-        android:layout_marginEnd="100dp"
         android:textColor="#00CFFF"
         android:textSize="15sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/userNameTextVal"/>
+        android:textStyle="bold"
+        app:layout_constraintLeft_toRightOf="@+id/vehicleNumberText"
+        app:layout_constraintTop_toBottomOf="@+id/userNameTextVal" />
+
 
     <TextView
         android:id="@+id/startTimeTextVal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="50dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="45dp"
         android:text="----"
-        android:textStyle="bold"
-        android:layout_marginEnd="100dp"
         android:textColor="#00CFFF"
         android:textSize="15sp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textStyle="bold"
+        app:layout_constraintLeft_toRightOf="@+id/startTimeText"
         app:layout_constraintTop_toBottomOf="@+id/vehicleNumberTextVal" />
 
 
@@ -150,15 +183,41 @@
         android:id="@+id/endTimeTextVal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="0dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="52dp"
         android:text="----"
-        android:textStyle="bold"
-        android:layout_marginEnd="100dp"
         android:textColor="#00CFFF"
         android:textSize="15sp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textStyle="bold"
+        app:layout_constraintLeft_toRightOf="@+id/endTimeText"
         app:layout_constraintTop_toBottomOf="@+id/startTimeTextVal" />
+        />
+
+    <TextView
+        android:id="@+id/chargeConTextVal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="13dp"
+        android:text="----"
+        android:textColor="#00CFFF"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintLeft_toRightOf="@+id/chargeConText"
+        app:layout_constraintTop_toBottomOf="@+id/endTimeTextVal" />
+
+    <TextView
+        android:id="@+id/costTextVal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="80dp"
+        android:text="----"
+        android:textColor="#00CFFF"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintLeft_toRightOf="@+id/costText"
+        app:layout_constraintTop_toBottomOf="@+id/chargeConTextVal" />
 
     <ImageButton
         android:id="@+id/controlbtn"
@@ -166,6 +225,7 @@
         android:layout_height="100dp"
         android:layout_marginStart="160dp"
         android:layout_marginEnd="160dp"
+        android:layout_marginTop="50dp"
         android:layout_marginBottom="30dp"
         android:text="On"
         android:src="@drawable/charge_on"
@@ -174,7 +234,8 @@
         android:scaleType="fitXY"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+
+        app:layout_constraintTop_toBottomOf="@+id/costTextVal"/>
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/group"
@@ -182,7 +243,8 @@
         android:layout_height="wrap_content"
         tools:layout_editor_absoluteX="202dp"
         tools:layout_editor_absoluteY="524dp"
-        app:constraint_referenced_ids="chargeValText,progressBar,userNameText,userNameTextVal,vehicleNumberText,vehicleNumberTextVal,startTimeText,startTimeTextVal,controlbtn,endTimeText,endTimeTextVal"/>
+        app:constraint_referenced_ids="chargeValText,progressBar,userNameText,userNameTextVal,vehicleNumberText,vehicleNumberTextVal,startTimeText,startTimeTextVal,controlbtn,endTimeText,endTimeTextVal,chargeConText,chargeConTextVal,costText,costTextVal,imageView2"/>
+
 
 
 
