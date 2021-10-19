@@ -111,7 +111,6 @@ class UserInfo():
         return self.evNumber        
     def setInitialCharge(self,initialCharge):
         self.initialCharge = initialCharge
-        print(initialCharge)
     def getInitialCharge(self):
         return self.initialCharge        
     def setFinalCharge(self,finalCharge):
@@ -170,7 +169,6 @@ class mqttComm():
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self,client, userdata, msg):
         self.taskObj = json.loads(msg.payload)
-        print(msg.payload)
         self.taskObj["commType"]= "mqtt"
         self.taskObj["transactionType"]= "rx"        
         taskScheduler.addToTaskQueue(self.taskObj)
