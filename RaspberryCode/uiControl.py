@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import os
 import pyqrcode
@@ -26,6 +26,7 @@ MQTT_PORT = 1883           # Port to listen on (non-privileged ports are > 1023)
 
 global evcsInfo      
 global tcpServerInstance
+global evcsStatus
 
 class tcpServerClient():
     clientsocket = None
@@ -59,7 +60,7 @@ class tcpServerClient():
         tcpServerClient.clientsocket = tcpServerClient.tempSocket
         try:
             tcpServerClient.clientsocket.connect((TCP_IP_HOST,TCP_IP_PORT))
-        except socket.error as err:	
+        except socket.error as err: 
             print("Failed to connect")
             print("Reason: %s",str(err))
             sys.exit()
@@ -75,21 +76,31 @@ class tcpServerClient():
     def getTcpData(self):  
         print("Waiting for tcp data")
         while True:
-            sleep(0.1)
             if(tcpServerClient.clientsocket != None):
                 data=tcpServerClient.clientsocket.recv(1024)
                 if data:
-                    self.taskObj = json.loads(data.decode('utf-8'))
-                    self.taskObj["commType"]= "tcp"
-                    self.taskObj["transactionType"]= "rx"
-                    taskScheduler.addToTaskQueue(self.taskObj)                    
+                    try:
+                        tempMsg = data.decode('utf-8')
+                        tempMsg.replace("\n", "")                
+                        self.taskObj = json.loads(tempMsg)
+                        self.taskObj["commType"]= "tcp"
+                        self.taskObj["transactionType"]= "rx"
+                        taskScheduler.addToTaskQueue(self.taskObj)
+                    except:
+                        pass
+                    finally:
+                        pass                    
     @staticmethod
     def sendTcpData(data): 
         if(tcpServerClient.clientsocket != None):
-            msg = json.dumps(data, indent=4)
-            #print(msg)
-            tcpServerClient.clientsocket.send(msg.encode('ascii'))    
-            
+            try:
+                msg = json.dumps(data, indent=4)
+                tcpServerClient.clientsocket.send(msg.encode('ascii'))
+            except:
+                pass
+            finally:
+                pass
+    
 class UserInfo():
     def __init__(self):
         self.userName = ""
@@ -168,7 +179,7 @@ class mqttComm():
 
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self,client, userdata, msg):
-        self.taskObj = json.loads(msg.payload)
+        self.taskObj = json.loads(msg.payload )
         self.taskObj["commType"]= "mqtt"
         self.taskObj["transactionType"]= "rx"        
         taskScheduler.addToTaskQueue(self.taskObj)
@@ -178,43 +189,46 @@ class mqttComm():
         mqttComm.client.publish(topic,msg)
         
 def BackendParser(msg):
-    if(msg["code"] == "101"):
-        Backend.userName = msg["user"]
-        Backend.evNumber = msg["evNumber"]
-        Backend.evChargeControl = "On"
-        if(Backend.requestStatus == ""):
-            Backend.requestStatus = "new"
-            Backend.terminationType = "unknown"
-            Backend.stateOfCharge = -1
-    elif(msg["code"] == "102"):
-        Backend.userName = msg["user"]
-        Backend.evNumber = msg["evNumber"]
-        Backend.evChargeControl = "Off"
-        Backend.terminationType = "user"    
-    elif(msg["code"] == "5001"):
-        Backend.evChargeControl = msg["evCharge"]
-    elif(msg["code"] == "5002"):
-        Backend.evChargeControl = msg["evCharge"]
-    elif(msg["code"] == "5003"):
-        Backend.stateOfCharge = float(msg["soc"]) 
-        Backend.batVolt = float(msg["batVolt"])
-        Backend.avgCurr = float(msg["avgCurr"])
-        Backend.remCapacity = float(msg["remCapacity"])
-        Backend.fullCapacity = float(msg["fullCapacity"])
-        Backend.avgPwr = float(msg["avgPwr"])
-        Backend.stateOfHealth = float(msg["soh"])      
-    elif(msg["code"] == "5004"):
-        Backend.batDect = msg["batDect"]
-    elif(msg["code"] == "3001"):
-        Backend.authenticateRequest = msg["authReq"]        
-        Backend.userName = msg["user"]
-        Backend.evNumber = msg["evNumber"]
-        #Backend.evChargerType = msg["evChargerType"]
-        #Backend.evVehicleType = msg["evVehicleType"]
-        Backend.evChargeOption = int( msg["evChargeOption"])
-        Backend.evChargeOptionParam = int (msg["evChargeOptionParam"])
-    else:
-        print("Unknown code")
+    try:
+        if(msg["code"] == "101"):
+            Backend.userName = msg["user"]
+            Backend.evNumber = msg["evNumber"]
+            Backend.evChargeControl = "On"
+            if(Backend.requestStatus == ""):
+                Backend.requestStatus = "new"
+        elif(msg["code"] == "102"):
+            Backend.userName = msg["user"]
+            Backend.evNumber = msg["evNumber"]
+            Backend.evChargeControl = "Off"
+            Backend.terminationType = "user"    
+        elif(msg["code"] == "5001"):
+            Backend.evChargeControl = msg["evCharge"]
+        elif(msg["code"] == "5002"):
+            Backend.evChargeControl = msg["evCharge"]
+        elif(msg["code"] == "5003"):
+            Backend.stateOfCharge = float(msg["soc"]) 
+            Backend.batVolt = float(msg["batVolt"])
+            Backend.avgCurr = float(msg["avgCurr"])
+            Backend.remCapacity = float(msg["remCapacity"])
+            Backend.fullCapacity = float(msg["fullCapacity"])
+            Backend.avgPwr = float(msg["avgPwr"])
+            Backend.stateOfHealth = float(msg["soh"])      
+        elif(msg["code"] == "5004"):
+            Backend.batDect = msg["batDect"]
+        elif(msg["code"] == "3001"):
+            Backend.authenticateRequest = msg["authReq"]        
+            Backend.userName = msg["user"]
+            Backend.evNumber = msg["evNumber"]
+            Backend.evChargerType = msg["evChargerType"]
+            Backend.evVehicleType = msg["evVehicleType"]
+            Backend.evChargeOption = int( msg["evChargeOption"])
+            Backend.evChargeOptionParam = int (msg["evChargeOptionParam"])
+        else:
+            print("Unknown code")
+    except:
+        print("exception")
+    finally:
+        pass
         
 class taskScheduler():
     global qTaskList
@@ -229,7 +243,6 @@ class taskScheduler():
     @staticmethod
     def addToTaskQueue(item):
         if not qTaskList.full():
-            #print("Task added")
             qTaskList.put(item)
 
     def executeFromTaskQueue(self):
@@ -388,68 +401,67 @@ class Backend(QObject):
         self.updated.emit(curr_time)
               
         self.periodicTcpData()
+        self.sendEvStatusMsg()
+        self.sendLocationServiceMsg()
         
         if(Backend.authenticateRequest == "true"):
-            Backend.authenticateRequest = ""
+            Backend.authenticateRequest = "false"
             self.userName = Backend.userName
             self.authResp()
 
-        if(Backend.stateOfCharge != -1):
-            self.stateOfCharge = Backend.stateOfCharge
-            if(Backend.requestStatus == "new"):
-                self.userName = Backend.userName
-                self.evNumber = Backend.evNumber
-                self.recordUserInfo()
-                self.chargerControlInstance.turnOnCharging()
-        
-        if( (Backend.requestStatus != "inProcess") and (Backend.requestStatus != "completed")):
-            if( Backend.batDect == "1" ):
-                self.conDect = ~self.conDect 
-                self.displayBatteryConnect(self.conDect)
-            else:    
-                self.conUnDect = ~self.conUnDect 
-                self.displayBatteryDisconnect(self.conUnDect)            
-        
-        if( (Backend.requestStatus == "new") and (Backend.batDect == "1") ):
-            #self.chargerControlInstance.turnOnCharging()
-            self.currUserInfo.setInitialCharge(self.stateOfCharge)
-            Backend.requestStatus = "inProcess"
+        if(Backend.authenticateRequest == "false"):
+            if(Backend.stateOfCharge != -1):
+                self.stateOfCharge = Backend.stateOfCharge
+                if(Backend.requestStatus == "new"):
+                    self.userName = Backend.userName
+                    self.evNumber = Backend.evNumber
+                    self.recordUserInfo()
+                    self.chargerControlInstance.turnOnCharging()
             
-        if(Backend.requestStatus == "inProcess"):
-            self.evChargeControl = Backend.evChargeControl
-            self.displayBatteryConnect(False)
-            self.displayBatteryDisconnect(False)
-            if(self.evChargeControl == "On"):
-                self.displayBattery(True)
-                self.setChargingStatus(True)
-                self.setBatteryLevel(self.stateOfCharge)
-                self.currUserInfo.setEndTime("----")         
-                if( self.checkForChargeCompletion()):
-                    self.evChargeControl = "Off"
-                    Backend.evChargeControl = "Off"
-            elif(self.evChargeControl == "Off"):
-                self.currUserInfo.setFinalCharge(self.stateOfCharge)
-                self.setChargingStatus(False)
-                self.setBatteryLevel(self.stateOfCharge)
-                self.currUserInfo.setEndTime(strftime("%H:%M:%S", localtime()))
-                self.evChargeControl = "Unknown"
-                self.chargerControlInstance.turnOffCharging()
-                Backend.requestStatus = "completed"
-            self.periodicUserData()
-        
-        if(Backend.requestStatus == "completed"):    
-            if( 0 == self.currUserInfo.getTimeoutStatus() ):
-                self.sendChargeTerminationMsg()
-                self.currUserInfo.resetData()
-                self.displayBattery(False) 
-                Backend.requestStatus = ""
-                Backend.stateOfCharge = -1
-                Backend.evChargeTime = 0
-                self.resetBEParams()
-        self.dispStartTime(self.currUserInfo.getStartTime())
-        self.dispEndTime(self.currUserInfo.getEndTime())        
-        self.dispUserName(self.currUserInfo.userName)      
-        self.dispEvNumber(self.currUserInfo.evNumber)                
+            if( (Backend.requestStatus != "inProcess") and (Backend.requestStatus != "completed")):
+                if( Backend.batDect == "1" ):
+                    self.conDect = ~self.conDect 
+                    self.displayBatteryConnect(self.conDect)
+                else:    
+                    self.conUnDect = ~self.conUnDect 
+                    self.displayBatteryDisconnect(self.conUnDect)            
+            
+            if( (Backend.requestStatus == "new") and (Backend.batDect == "1") ):
+                self.currUserInfo.setInitialCharge(self.stateOfCharge)
+                Backend.requestStatus = "inProcess"
+                
+            if(Backend.requestStatus == "inProcess"):
+                self.evChargeControl = Backend.evChargeControl
+                self.displayBatteryConnect(False)
+                self.displayBatteryDisconnect(False)
+                if(self.evChargeControl == "On"):
+                    self.displayBattery(True)
+                    self.setChargingStatus(True)
+                    self.setBatteryLevel(self.stateOfCharge)
+                    self.currUserInfo.setEndTime("----")         
+                    if( self.checkForChargeCompletion()):
+                        self.evChargeControl = "Off"
+                        Backend.evChargeControl = "Off"
+                elif(self.evChargeControl == "Off"):
+                    self.currUserInfo.setFinalCharge(self.stateOfCharge)
+                    self.setChargingStatus(False)
+                    self.setBatteryLevel(self.stateOfCharge)
+                    self.currUserInfo.setEndTime(strftime("%H:%M:%S", localtime()))
+                    self.evChargeControl = "Unknown"
+                    self.chargerControlInstance.turnOffCharging()
+                    Backend.requestStatus = "completed"
+                self.periodicUserData()
+            
+            if(Backend.requestStatus == "completed"):    
+                if( 0 == self.currUserInfo.getTimeoutStatus() ):
+                    self.sendChargeTerminationMsg()
+                    self.currUserInfo.resetData()
+                    self.displayBattery(False) 
+                    self.resetBEParams()
+            self.dispStartTime(self.currUserInfo.getStartTime())
+            self.dispEndTime(self.currUserInfo.getEndTime())        
+            self.dispUserName(self.currUserInfo.userName)      
+            self.dispEvNumber(self.currUserInfo.evNumber)                
 
     def checkForChargeCompletion(self):
         ret = False
@@ -521,6 +533,52 @@ class Backend(QObject):
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
         self.scheduler.addToTaskQueue(TaskObject)
+
+    def sendLocationServiceMsg(self):
+        TaskDict ={}
+        TaskDict["commType"]= "mqtt"
+        TaskDict["transactionType"]= "tx"
+        pubTopic = "topic/locationService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"])
+        TaskDict["topic"]= pubTopic
+        TaskDict["code"]= "1001"
+        TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
+        TaskDict["evcsState"]= str(evcsInfo["evcsState"])
+        TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
+        TaskDict["evcsName"]= str(evcsInfo["evcsName"])
+        TaskDict["evcsId"]= str(evcsInfo["evcsId"])     
+        TaskDict["evcsLat"]= str(evcsInfo["evcsLat"])
+        TaskDict["evcsLon"]= str(evcsInfo["evcsLon"])
+            
+        TaskStr = json.dumps(TaskDict, indent = 4)
+        TaskObject = json.loads(TaskStr)
+        self.scheduler.addToTaskQueue(TaskObject)
+        
+    def sendEvStatusMsg(self):
+        TaskDict ={}
+        TaskDict["commType"]= "mqtt"
+        TaskDict["transactionType"]= "tx"
+        pubTopic = "topic/cpoData/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"])
+        TaskDict["topic"]= pubTopic
+        TaskDict["code"]= "6001"
+        TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
+        TaskDict["evcsState"]= str(evcsInfo["evcsState"])
+        TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
+        TaskDict["evcsName"]= str(evcsInfo["evcsName"])
+        TaskDict["maxSlots"]= str(1)
+
+        if(evcsStatus == "good"):
+            if(Backend.requestStatus == "inProcess"):
+                TaskDict["status"]= "busy" 
+                TaskDict["freeSlots"]= str(0)    
+            else:
+                TaskDict["status"]= "free"
+                TaskDict["freeSlots"]= str(1)
+        else:        
+            TaskDict["status"]= "unknown" 
+            
+        TaskStr = json.dumps(TaskDict, indent = 4)
+        TaskObject = json.loads(TaskStr)
+        self.scheduler.addToTaskQueue(TaskObject)
         
     def periodicTcpData(self):
         #if(Backend.batDect == "1"):
@@ -585,6 +643,7 @@ evData = json.dumps(evcsInfo )
 url = pyqrcode.create(evData)
 url.png('deviceQR.png',scale = 6)
 
+evcsStatus = "good"
 app = QGuiApplication(sys.argv)
 engine = QQmlApplicationEngine()
 engine.quit.connect(app.quit)

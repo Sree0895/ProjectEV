@@ -87,8 +87,7 @@ class taskScheduler():
     @staticmethod
     def addToTaskQueue(item):
         if not qTaskList.full():
-            #print("Task added")
-            qTaskList.put(item)
+            qTaskList.put(item )
 
     def executeFromTaskQueue(self):
         if not qTaskList.empty():
@@ -197,7 +196,7 @@ class tcpServerClient():
         tcpServerClient.clientsocket = tcpServerClient.tempSocket
         try:
             tcpServerClient.clientsocket.connect((TCP_IP_HOST,TCP_IP_PORT))
-        except socket.error as err:	
+        except socket.error as err: 
             print("Failed to connect")
             print("Reason: %s",str(err))
             sys.exit()
@@ -213,21 +212,24 @@ class tcpServerClient():
     def getTcpData(self):  
         print("Waiting for tcp data")
         while True:
-            #sleep(0.1)
             if(tcpServerClient.clientsocket != None):
                 data=tcpServerClient.clientsocket.recv(1024)
                 if data:
-                    #print(data.decode('utf-8'))
-                    self.taskObj = json.loads(data.decode('utf-8'))
-                    self.taskObj["commType"]= "tcp"
-                    self.taskObj["transactionType"]= "rx"
-                    #print(self.taskObj)
-                    taskScheduler.addToTaskQueue(self.taskObj)                    
+                    try:
+                        tempMsg = data.decode('utf-8')
+                        tempMsg.replace("\n", "")
+                        self.taskObj = json.loads(tempMsg)
+                        self.taskObj["commType"]= "tcp"
+                        self.taskObj["transactionType"]= "rx"
+                        taskScheduler.addToTaskQueue(self.taskObj)
+                    except:
+                        pass
+                    finally:
+                        pass
     @staticmethod
     def sendTcpData(data): 
         if(tcpServerClient.clientsocket != None):
             msg = json.dumps(data, indent=4)
-            #print(msg)
             tcpServerClient.clientsocket.send(msg.encode('ascii'))    
 
 tcpCommInstance = tcpServerClient("server")

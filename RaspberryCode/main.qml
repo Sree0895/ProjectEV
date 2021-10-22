@@ -32,67 +32,6 @@ ApplicationWindow {
         }		
     }
 
-	Row
-	{
-		x:600
-		y:150
-		spacing: 100
-		Image 
-		{
-			id: bike
-			width: 200
-			height: 200
-			source: "bike.png"
-			fillMode: Image.PreserveAspectFit
-		}
-
-		Image 
-		{
-			id: scooter
-			width: 150
-			height: 150
-			source: "scooter.png"
-			fillMode: Image.PreserveAspectFit
-		}
-
-		Image 
-		{
-			id: car
-			width: 200
-			height: 200
-			source: "car.png"
-			fillMode: Image.PreserveAspectFit
-		}		
-	
-	}
-
-	SequentialAnimation 
-	{
-		SequentialAnimation 
-		{
-			ParallelAnimation {
-				YAnimator {
-					target: car;
-					from: car.minHeight;
-					to: car.maxHeight
-					easing.type: Easing.OutExpo;
-					duration: 3
-				}
-			}
-			ParallelAnimation {
-				YAnimator {
-					target: bike;
-					from: bike.maxHeight;
-					to: bike.minHeight
-					easing.type: Easing.OutBounce;
-					duration: 10
-				}
-			}
-		}
-		PauseAnimation { duration: 5 }
-		running: true
-		loops: Animation.Infinite
-	}	
 	Text 
 	{
 		id: title
