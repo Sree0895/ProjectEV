@@ -27,6 +27,11 @@ MQTT_PORT = 1883           # Port to listen on (non-privileged ports are > 1023)
 global evcsInfo      
 global tcpServerInstance
 global evcsStatus
+global subBookingSlotReqTopic
+global subUserServiceTopic
+global pubUserServiceTopic
+global pubBookingSlotServiceTopic
+global pubLocationServiceTopic
 
 class tcpServerClient():
     clientsocket = None
@@ -172,8 +177,9 @@ class mqttComm():
         # reconnect then subscriptions will be renewed.
         if rc==0:
             mqttComm.client.connected_flag=True
-            topic = "topic/userService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) + "/"+ str(evcsInfo["evcsId"]) + "/" + "#"
-            mqttComm.client.subscribe(topic)
+            subUserServiceTopic = "topic/userService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) + "/"+ str(evcsInfo["evcsId"]) + "/" + "#"
+            subBookingSlotReqTopic = "topic/bookingSlotRequest/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) 
+            mqttComm.client.subscribe([(subUserServiceTopic, 0), (subBookingSlotReqTopic, 0)])
         else:
             mqttComm.client.connected_flag=False
 
@@ -223,6 +229,20 @@ def BackendParser(msg):
             Backend.evVehicleType = msg["evVehicleType"]
             Backend.evChargeOption = int( msg["evChargeOption"])
             Backend.evChargeOptionParam = int (msg["evChargeOptionParam"])
+        elif(msg["code"] == "9002"):
+            Backend.bookingRequest = True        
+            Backend.bookingUserName = msg["user"]
+            Backend.bookingEvNumber = msg["evNumber"]
+            Backend.bookingEvChargerType = msg["evChargerType"]
+            Backend.bookingEvVehicleType = msg["evVehicleType"]
+            Backend.bookingSlotReq = int(msg["slotReq"])
+        elif(msg["code"] == "9004"):
+            Backend.bookingRequest = False        
+            Backend.bookingUserName = msg["user"]
+            Backend.bookingEvNumber = msg["evNumber"]
+            Backend.bookingEvChargerType = msg["evChargerType"]
+            Backend.bookingEvVehicleType = msg["evVehicleType"]
+            Backend.bookingSlotReq = int(msg["slotReq"])            
         else:
             print("Unknown code")
     except:
@@ -339,6 +359,13 @@ class Backend(QObject):
     evChargeTime  = 0
     terminationType = "unknown"
     
+    bookingRequest = ""        
+    bookingUserName = ""
+    bookingEvNumber = ""
+    bookingEvChargerType = ""
+    bookingEvVehicleType = ""
+    bookingSlotReq = -1        
+    
     def __init__(self):
         super().__init__()
         # Define timer.
@@ -386,6 +413,14 @@ class Backend(QObject):
         Backend.evChargeOptionParam = -1 
         Backend.evChargeTime  = 0
         Backend.terminationType = "unknown"
+        
+        Backend.bookingRequest = ""        
+        Backend.bookingUserName = ""
+        Backend.bookingEvNumber = ""
+        Backend.bookingEvChargerType = ""
+        Backend.bookingEvVehicleType = ""
+        Backend.bookingSlotReq = -1
+            
     
     def startTimers(self):
         self.timer.start()    
@@ -403,6 +438,13 @@ class Backend(QObject):
         self.periodicTcpData()
         self.sendEvStatusMsg()
         self.sendLocationServiceMsg()
+        self.sendLocationServiceMsg1()
+        self.sendBookingServiceMsg()
+        self.sendSubBookingServiceMsg()
+        
+        if(Backend.bookingRequest != ""):
+            self.processBookingRequest()
+            Backend.bookingRequest = ""
         
         if(Backend.authenticateRequest == "true"):
             Backend.authenticateRequest = "false"
@@ -552,6 +594,84 @@ class Backend(QObject):
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
         self.scheduler.addToTaskQueue(TaskObject)
+
+    def sendBookingServiceMsg(self):
+        TaskDict ={}
+        TaskDict["commType"]= "mqtt"
+        TaskDict["transactionType"]= "tx"
+        pubTopic = "topic/bookingSlotService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"])
+        TaskDict["topic"]= pubTopic
+        TaskDict["code"]= "9001"
+        TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
+        TaskDict["evcsState"]= str(evcsInfo["evcsState"])
+        TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
+        TaskDict["evcsName"]= str(evcsInfo["evcsName"])
+        TaskDict["evcsId"]= str(evcsInfo["evcsId"])     
+        TaskDict["evcsLat"]= str(evcsInfo["evcsLat"])
+        TaskDict["evcsLon"]= str(evcsInfo["evcsLon"])
+            
+        TaskStr = json.dumps(TaskDict, indent = 4)
+        TaskObject = json.loads(TaskStr)
+        self.scheduler.addToTaskQueue(TaskObject)
+
+        TaskDict ={}
+        TaskDict["commType"]= "mqtt"
+        TaskDict["transactionType"]= "tx"
+        pubTopic = "topic/bookingSlotService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"])
+        TaskDict["topic"]= pubTopic
+        TaskDict["code"]= "9001"
+        TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
+        TaskDict["evcsState"]= str(evcsInfo["evcsState"])
+        TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
+        TaskDict["evcsName"]= "Statiion 1"
+        TaskDict["evcsId"]= "EV002378"   
+        TaskDict["evcsLat"]= "17.459"
+        TaskDict["evcsLon"]= "78.349" 
+        
+        TaskStr = json.dumps(TaskDict, indent = 4)
+        TaskObject = json.loads(TaskStr)
+        self.scheduler.addToTaskQueue(TaskObject)
+        
+    def sendSubBookingServiceMsg(self):
+        TaskDict ={}
+        TaskDict["commType"]= "mqtt"
+        TaskDict["transactionType"]= "tx"
+        pubTopic = "topic/bookingSlotServiceEvcs/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"])
+        TaskDict["topic"]= pubTopic
+        TaskDict["code"]= "9000"
+        TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
+        TaskDict["evcsState"]= str(evcsInfo["evcsState"])
+        TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
+        TaskDict["evcsName"]= str(evcsInfo["evcsName"])
+        TaskDict["evcsId"]= str(evcsInfo["evcsId"])     
+        TaskDict["freeSlots"] = self.getFreeSlotList()
+            
+            
+        TaskStr = json.dumps(TaskDict, indent = 4)
+        TaskObject = json.loads(TaskStr)
+        self.scheduler.addToTaskQueue(TaskObject)
+        
+    def getFreeSlotList(self):
+        return 12
+        
+    def sendLocationServiceMsg1(self):
+        TaskDict ={}
+        TaskDict["commType"]= "mqtt"
+        TaskDict["transactionType"]= "tx"
+        pubTopic = "topic/locationService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"])
+        TaskDict["topic"]= pubTopic
+        TaskDict["code"]= "1001"
+        TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
+        TaskDict["evcsState"]= str(evcsInfo["evcsState"])
+        TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
+        TaskDict["evcsName"]= "Statiion 1"
+        TaskDict["evcsId"]= "EV002378"    
+        TaskDict["evcsLat"]= "17.459"
+        TaskDict["evcsLon"]= "78.349"
+            
+        TaskStr = json.dumps(TaskDict, indent = 4)
+        TaskObject = json.loads(TaskStr)
+        self.scheduler.addToTaskQueue(TaskObject)
         
     def sendEvStatusMsg(self):
         TaskDict ={}
@@ -585,6 +705,33 @@ class Backend(QObject):
         self.chargerControlInstance.getChargingStatus()
         self.chargerControlInstance.getBatDectStatus()
 
+    def processBookingRequest(self):
+        TaskDict ={}
+        TaskDict["commType"]= "mqtt"
+        TaskDict["transactionType"]= "tx"
+        pubTopic = "topic/bookingSlotServiceEvcs/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) 
+        TaskDict["topic"]= pubTopic
+        if(Backend.bookingRequest == True):
+            TaskDict["code"]= "9003"
+            TaskDict["response"]= "Booking Success"
+        else:
+            TaskDict["code"]= "9005"
+            TaskDict["response"]= "Release Success"
+        
+        if(Backend.bookingSlotReq < 256):
+            TaskDict["response"]= "Slot not available"
+
+        TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
+        TaskDict["evcsState"]= str(evcsInfo["evcsState"])
+        TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
+        TaskDict["evcsName"]= str(evcsInfo["evcsName"])
+        TaskDict["user"]= Backend.bookingUserName
+        TaskDict["evNumber"]= Backend.bookingEvNumber
+
+        TaskStr = json.dumps(TaskDict, indent = 4)
+        TaskObject = json.loads(TaskStr)
+        self.scheduler.addToTaskQueue(TaskObject)
+        
     def displayBatteryConnect(self,status):
         engine.rootObjects()[0].setProperty("batDect", status)
 
