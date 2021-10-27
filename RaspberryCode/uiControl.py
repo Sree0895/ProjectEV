@@ -17,12 +17,23 @@ import threading
 import time
 from time import sleep
 import queue
-
+import logging
 
 TCP_IP_HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 TCP_IP_PORT = 9999         # Port to listen on (non-privileged ports are > 1023)
 MQTT_HOST = "192.168.1.34" # Standard loopback interface address (localhost)
 MQTT_PORT = 1883           # Port to listen on (non-privileged ports are > 1023)
+
+
+logging.basicConfig(filename="uiControl.log",
+                    format='%(asctime)s %(message)s',
+                    filemode='w')
+  
+#Creating an object
+logger=logging.getLogger()
+  
+#Setting the threshold of logger to DEBUG
+logger.setLevel(logging.DEBUG)
 
 global evcsInfo      
 global tcpServerInstance
@@ -192,6 +203,7 @@ class mqttComm():
         
     def mqttSend(self,data,topic):
         msg = json.dumps(data, indent = 4)
+        logger.debug(msg)
         mqttComm.client.publish(topic,msg)
         
 def BackendParser(msg):
@@ -386,6 +398,9 @@ class Backend(QObject):
         self.timer2 = QTimer()
         self.timer2.setInterval(20)  # msecs 100 = 1/10th sec
         self.timer2.timeout.connect(self.executeTask)
+        
+        self.tenSecTimerCnt = 0
+        self.fiveSecTimerCnt = 0
 
     def resetBEParams(self):
         Backend.userName = ""
@@ -436,11 +451,14 @@ class Backend(QObject):
         self.updated.emit(curr_time)
               
         self.periodicTcpData()
-        self.sendEvStatusMsg()
-        self.sendLocationServiceMsg()
-        self.sendLocationServiceMsg1()
-        self.sendBookingServiceMsg()
-        self.sendSubBookingServiceMsg()
+        
+        if(self.tenSecTimerCnt%10 == 0):
+            self.sendEvStatusMsg()
+            self.sendLocationServiceMsg()
+            self.sendLocationServiceMsg1()
+            self.sendBookingServiceMsg()
+            self.sendSubBookingServiceMsg()
+        self.tenSecTimerCnt = self.tenSecTimerCnt + 1   
         
         if(Backend.bookingRequest != ""):
             self.processBookingRequest()
@@ -548,33 +566,40 @@ class Backend(QObject):
         TaskDict["endTime"]= self.currUserInfo.getEndTime()
         TaskDict["termination"]= Backend.terminationType
         TaskDict["evChargeOption"]= Backend.evChargeOption
-        TaskDict["evChargeOptionParam"]= Backend.evChargeOptionParam        
+        TaskDict["evChargeOptionParam"]= Backend.evChargeOptionParam
+        TaskDict["TimeStamp"]= str((int)(time.time()))        
                 
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
         self.scheduler.addToTaskQueue(TaskObject)
 
     def sendChargeTerminationMsg(self):
-        TaskDict ={}
-        TaskDict["commType"]= "mqtt"
-        TaskDict["transactionType"]= "tx"
-        pubTopic = "topic/userData/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) + "/"+ str(evcsInfo["evcsId"]) + "/" + str(self.currUserInfo.getUserName()) 
-        TaskDict["topic"]= pubTopic
-        TaskDict["code"]= "3005"
-        TaskDict["user"]= self.currUserInfo.getUserName()
-        TaskDict["evNumber"]= self.currUserInfo.getEvNumber()
-        TaskDict["currCharge"]= self.stateOfCharge
-        TaskDict["initialCharge"]= self.currUserInfo.getInitialCharge()
-        TaskDict["finalCharge"]= self.currUserInfo.getFinalCharge()
-        TaskDict["startTime"]= self.currUserInfo.getStartTime()
-        TaskDict["endTime"]= self.currUserInfo.getEndTime()
-        TaskDict["termination"]= Backend.terminationType
-        TaskDict["evChargeOption"]= Backend.evChargeOption
-        TaskDict["evChargeOptionParam"]= Backend.evChargeOptionParam        
-                
-        TaskStr = json.dumps(TaskDict, indent = 4)
-        TaskObject = json.loads(TaskStr)
-        self.scheduler.addToTaskQueue(TaskObject)
+        number = 0
+        while number < 3 :
+            TaskDict ={}
+            TaskDict["commType"]= "mqtt"
+            TaskDict["transactionType"]= "tx"
+            pubTopic = "topic/userData/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) + "/"+ str(evcsInfo["evcsId"]) + "/" + str(self.currUserInfo.getUserName()) 
+            TaskDict["topic"]= pubTopic
+            TaskDict["code"]= "3005"
+            TaskDict["user"]= self.currUserInfo.getUserName()
+            TaskDict["evNumber"]= self.currUserInfo.getEvNumber()
+            TaskDict["currCharge"]= self.stateOfCharge
+            TaskDict["initialCharge"]= self.currUserInfo.getInitialCharge()
+            TaskDict["finalCharge"]= self.currUserInfo.getFinalCharge()
+            TaskDict["startTime"]= self.currUserInfo.getStartTime()
+            TaskDict["endTime"]= self.currUserInfo.getEndTime()
+            #TaskDict["termination"]= Backend.terminationType
+            #TaskDict["evChargeOption"]= Backend.evChargeOption
+            #TaskDict["evChargeOptionParam"]= Backend.evChargeOptionParam
+            TaskDict["TimeStamp"]= str((int)(time.time()))        
+                    
+            TaskStr = json.dumps(TaskDict, indent = 4)
+            TaskObject = json.loads(TaskStr)
+            self.scheduler.addToTaskQueue(TaskObject)
+            #print(TaskObject)
+            logger.debug(TaskObject)
+            number = number + 1
 
     def sendLocationServiceMsg(self):
         TaskDict ={}
@@ -590,6 +615,7 @@ class Backend(QObject):
         TaskDict["evcsId"]= str(evcsInfo["evcsId"])     
         TaskDict["evcsLat"]= str(evcsInfo["evcsLat"])
         TaskDict["evcsLon"]= str(evcsInfo["evcsLon"])
+        TaskDict["TimeStamp"]= str((int)(time.time()))
             
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
@@ -609,6 +635,7 @@ class Backend(QObject):
         TaskDict["evcsId"]= str(evcsInfo["evcsId"])     
         TaskDict["evcsLat"]= str(evcsInfo["evcsLat"])
         TaskDict["evcsLon"]= str(evcsInfo["evcsLon"])
+        TaskDict["TimeStamp"]= str((int)(time.time()))
             
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
@@ -627,6 +654,7 @@ class Backend(QObject):
         TaskDict["evcsId"]= "EV002378"   
         TaskDict["evcsLat"]= "17.459"
         TaskDict["evcsLon"]= "78.349" 
+        TaskDict["TimeStamp"]= str((int)(time.time()))
         
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
@@ -645,6 +673,7 @@ class Backend(QObject):
         TaskDict["evcsName"]= str(evcsInfo["evcsName"])
         TaskDict["evcsId"]= str(evcsInfo["evcsId"])     
         TaskDict["freeSlots"] = self.getFreeSlotList()
+        TaskDict["TimeStamp"]= str((int)(time.time()))
             
             
         TaskStr = json.dumps(TaskDict, indent = 4)
@@ -668,6 +697,7 @@ class Backend(QObject):
         TaskDict["evcsId"]= "EV002378"    
         TaskDict["evcsLat"]= "17.459"
         TaskDict["evcsLon"]= "78.349"
+        TaskDict["TimeStamp"]= str((int)(time.time()))
             
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
@@ -685,6 +715,7 @@ class Backend(QObject):
         TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
         TaskDict["evcsName"]= str(evcsInfo["evcsName"])
         TaskDict["maxSlots"]= str(1)
+        TaskDict["TimeStamp"]= str((int)(time.time()))
 
         if(evcsStatus == "good"):
             if(Backend.requestStatus == "inProcess"):
@@ -727,6 +758,7 @@ class Backend(QObject):
         TaskDict["evcsName"]= str(evcsInfo["evcsName"])
         TaskDict["user"]= Backend.bookingUserName
         TaskDict["evNumber"]= Backend.bookingEvNumber
+        TaskDict["TimeStamp"]= str((int)(time.time()))
 
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)

@@ -4,10 +4,9 @@ import socket
 import json
 import time
 import queue
+import logging
 
 from time import sleep
-from PyQt5.QtGui import QGuiApplication
-from PyQt5.QtCore import QUrl, QTimer, pyqtSignal, QObject
 import sys
 import os
 import threading
@@ -30,17 +29,6 @@ class Backend(QObject):
         super().__init__()
         
         self.scheduler = taskScheduler()
-        
-        # Define timer.
-        self.timer = QTimer()
-        self.timer.setInterval(3000)  # msecs 100 = 1/10th sec
-        self.timer.timeout.connect(self.update_time)
-        self.timer.start()
-
-        self.timer2 = QTimer()
-        self.timer2.setInterval(20)  # msecs 100 = 1/10th sec
-        self.timer2.timeout.connect(self.executeTask)
-        self.timer2.start()
         
     def update_time(self):
         if(Backend.batDect == 1):
@@ -117,7 +105,7 @@ def BackendParser(msg):
         TaskDict["code"]= "5001"     
         TaskDict["evCharge"]= "On"
         if(Backend.batDect == 0): 
-            Backend.stateOfCharge = random.uniform(0, 1)
+            Backend.stateOfCharge = 0.05
         TaskDict["TimeStamp"]= str((int)(time.time()))       
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
@@ -232,6 +220,71 @@ class tcpServerClient():
             msg = json.dumps(data, indent=4)
             tcpServerClient.clientsocket.send(msg.encode('ascii'))    
 
+class PeriodicThread(object):
+    """
+    Python periodic Thread using Timer with instant cancellation
+    """
+
+    def __init__(self, callback=None, period=1, name=None, *args, **kwargs):
+        self.name = name
+        self.args = args
+        self.kwargs = kwargs
+        self.callback = callback
+        self.period = period
+        self.stop = False
+        self.current_timer = None
+        self.schedule_lock = threading.Lock()
+
+    def start(self):
+        """
+        Mimics Thread standard start method
+        """
+        self.schedule_timer()
+
+    def run(self):
+        """
+        By default run callback. Override it if you want to use inheritance
+        """
+        if self.callback is not None:
+            self.callback()
+
+    def _run(self):
+        """
+        Run desired callback and then reschedule Timer (if thread is not stopped)
+        """
+        try:
+            self.run()
+        except:
+            logging.exception("Exception in running periodic thread")
+        finally:
+            with self.schedule_lock:
+                if not self.stop:
+                    self.schedule_timer()
+
+    def schedule_timer(self):
+        """
+        Schedules next Timer run
+        """
+        self.current_timer = threading.Timer(self.period, self._run, *self.args, **self.kwargs)
+        if self.name:
+            self.current_timer.name = self.name
+        self.current_timer.start()
+
+    def cancel(self):
+        """
+        Mimics Timer standard cancel method
+        """
+        with self.schedule_lock:
+            self.stop = True
+            if self.current_timer is not None:
+                self.current_timer.cancel()
+
+    def join(self):
+        """
+        Mimics Thread standard join method
+        """
+        self.current_timer.join()
+    
 tcpCommInstance = tcpServerClient("server")
 tcpCommInstance.createSocketConnection()
 if(tcpServerClient.connectionType == "server"):
@@ -244,8 +297,9 @@ else:
 t2 = threading.Thread(target=tcpCommInstance.getTcpData)
 t2.daemon = True
 t2.start()
-app = QGuiApplication(sys.argv)
 beInstance = Backend()
-app.exec_()
-
+periodicTask1 = PeriodicThread(beInstance.update_time, 3  )
+periodicTask1.schedule_timer()
+periodicTask2 = PeriodicThread(beInstance.executeTask, 0.1  )
+periodicTask2.schedule_timer()
 
