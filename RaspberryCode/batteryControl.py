@@ -200,20 +200,28 @@ class tcpServerClient():
     def getTcpData(self):  
         print("Waiting for tcp data")
         while True:
-            if(tcpServerClient.clientsocket != None):
-                data=tcpServerClient.clientsocket.recv(1024)
-                if data:
-                    try:
-                        tempMsg = data.decode('utf-8')
-                        tempMsg.replace("\n", "")
-                        self.taskObj = json.loads(tempMsg)
-                        self.taskObj["commType"]= "tcp"
-                        self.taskObj["transactionType"]= "rx"
-                        taskScheduler.addToTaskQueue(self.taskObj)
-                    except:
-                        pass
-                    finally:
-                        pass
+            try:
+                if(tcpServerClient.clientsocket != None):
+                    data=tcpServerClient.clientsocket.recv(1024)
+                    if data:
+                        try:
+                            tempMsg = data.decode('utf-8')
+                            tempMsg.replace("\n", "")
+                            self.taskObj = json.loads(tempMsg)
+                            self.taskObj["commType"]= "tcp"
+                            self.taskObj["transactionType"]= "rx"
+                            taskScheduler.addToTaskQueue(self.taskObj)
+                        except:
+                            print("TCP Data exception")
+                        finally:
+                            pass
+            except ConnectionResetError:
+                print("TCP connection Error")
+                tcpServerClient.clientsocket.close()
+                tcpServerClient.clientsocket = None
+                self.waitForClientConnection()
+            finally:
+                pass
     @staticmethod
     def sendTcpData(data): 
         if(tcpServerClient.clientsocket != None):

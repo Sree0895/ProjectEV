@@ -92,20 +92,28 @@ class tcpServerClient():
     def getTcpData(self):  
         print("Waiting for tcp data")
         while True:
-            if(tcpServerClient.clientsocket != None):
-                data=tcpServerClient.clientsocket.recv(1024)
-                if data:
-                    try:
-                        tempMsg = data.decode('utf-8')
-                        tempMsg.replace("\n", "")                
-                        self.taskObj = json.loads(tempMsg)
-                        self.taskObj["commType"]= "tcp"
-                        self.taskObj["transactionType"]= "rx"
-                        taskScheduler.addToTaskQueue(self.taskObj)
-                    except:
-                        pass
-                    finally:
-                        pass                    
+            try:
+                if(tcpServerClient.clientsocket != None):
+                    data=tcpServerClient.clientsocket.recv(1024)
+                    if data:
+                        try:
+                            tempMsg = data.decode('utf-8')
+                            tempMsg.replace("\n", "")                
+                            self.taskObj = json.loads(tempMsg)
+                            self.taskObj["commType"]= "tcp"
+                            self.taskObj["transactionType"]= "rx"
+                            taskScheduler.addToTaskQueue(self.taskObj)
+                        except:
+                            print("TCP data exception")
+                        finally:
+                            pass
+            except ConnectionResetError:
+                print("TCP connection Error")
+                tcpServerClient.clientsocket.close()
+                tcpServerClient.clientsocket = None
+                #self.connect()
+            finally:
+                pass                            
     @staticmethod
     def sendTcpData(data): 
         if(tcpServerClient.clientsocket != None):
@@ -545,7 +553,13 @@ class Backend(QObject):
         TaskDict["transactionType"]= "tx"
         pubTopic = "topic/userData/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) + "/"+ str(evcsInfo["evcsId"]) + "/" + str(self.userName) 
         TaskDict["topic"]= pubTopic
-        TaskDict["code"]= "3002"
+        TaskDict["code"]= "3002"     
+        TaskDict["user"]= Backend.userName
+        TaskDict["evNumber"]= Backend.evNumber
+        TaskDict["evChargeOption"]= Backend.evChargeOption
+        TaskDict["evChargeOptionParam"]= Backend.evChargeOptionParam
+        TaskDict["TimeStamp"]= str((int)(time.time()))
+        
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
         self.scheduler.addToTaskQueue(TaskObject)
@@ -574,32 +588,27 @@ class Backend(QObject):
         self.scheduler.addToTaskQueue(TaskObject)
 
     def sendChargeTerminationMsg(self):
-        number = 0
-        while number < 3 :
-            TaskDict ={}
-            TaskDict["commType"]= "mqtt"
-            TaskDict["transactionType"]= "tx"
-            pubTopic = "topic/userData/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) + "/"+ str(evcsInfo["evcsId"]) + "/" + str(self.currUserInfo.getUserName()) 
-            TaskDict["topic"]= pubTopic
-            TaskDict["code"]= "3005"
-            TaskDict["user"]= self.currUserInfo.getUserName()
-            TaskDict["evNumber"]= self.currUserInfo.getEvNumber()
-            TaskDict["currCharge"]= self.stateOfCharge
-            TaskDict["initialCharge"]= self.currUserInfo.getInitialCharge()
-            TaskDict["finalCharge"]= self.currUserInfo.getFinalCharge()
-            TaskDict["startTime"]= self.currUserInfo.getStartTime()
-            TaskDict["endTime"]= self.currUserInfo.getEndTime()
-            #TaskDict["termination"]= Backend.terminationType
-            #TaskDict["evChargeOption"]= Backend.evChargeOption
-            #TaskDict["evChargeOptionParam"]= Backend.evChargeOptionParam
-            TaskDict["TimeStamp"]= str((int)(time.time()))        
-                    
-            TaskStr = json.dumps(TaskDict, indent = 4)
-            TaskObject = json.loads(TaskStr)
-            self.scheduler.addToTaskQueue(TaskObject)
-            #print(TaskObject)
-            logger.debug(TaskObject)
-            number = number + 1
+        TaskDict ={}
+        TaskDict["commType"]= "mqtt"
+        TaskDict["transactionType"]= "tx"
+        pubTopic = "topic/userData/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) + "/"+ str(evcsInfo["evcsId"]) + "/" + str(self.currUserInfo.getUserName()) 
+        TaskDict["topic"]= pubTopic
+        TaskDict["code"]= "3005"
+        TaskDict["user"]= self.currUserInfo.getUserName()
+        TaskDict["evNumber"]= self.currUserInfo.getEvNumber()
+        TaskDict["currCharge"]= self.stateOfCharge
+        TaskDict["initialCharge"]= self.currUserInfo.getInitialCharge()
+        TaskDict["finalCharge"]= self.currUserInfo.getFinalCharge()
+        TaskDict["startTime"]= self.currUserInfo.getStartTime()
+        TaskDict["endTime"]= self.currUserInfo.getEndTime()
+        TaskDict["termination"]= Backend.terminationType
+        TaskDict["evChargeOption"]= Backend.evChargeOption
+        TaskDict["evChargeOptionParam"]= Backend.evChargeOptionParam
+        TaskDict["TimeStamp"]= str((int)(time.time()))        
+                
+        TaskStr = json.dumps(TaskDict, indent = 4)
+        TaskObject = json.loads(TaskStr)
+        self.scheduler.addToTaskQueue(TaskObject)
 
     def sendLocationServiceMsg(self):
         TaskDict ={}
