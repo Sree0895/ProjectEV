@@ -25,7 +25,7 @@
         android:id="@+id/spinnerStates"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="50dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -66,7 +66,7 @@
         app:layout_constraintTop_toBottomOf="@+id/spinnerDistricts"/>
 
     <Spinner
-        android:id="@+id/spinnerEv"
+        android:id="@+id/spinnerEvList"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -83,7 +83,58 @@
         android:textColor="#00FF00"
         android:text="Slots"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/spinnerEv"/>
+        app:layout_constraintTop_toBottomOf="@+id/spinnerEvList"/>
+
+    <ListView
+        android:id="@+id/timeslotListView"
+        android:choiceMode="singleChoice"
+        android:listSelector="@android:color/holo_blue_light"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:textColor="#FFFFFF"
+        app:layout_constraintTop_toBottomOf="@+id/slotText"
+        app:layout_constraintStart_toStartOf="parent">
+    </ListView>
+
+    <Button
+        android:id="@+id/book_button"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="#3F51B5"
+        android:text="Book"
+        android:textColor="#FFFFFF"
+        app:layout_constraintTop_toBottomOf="@+id/timeslotListView"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <Button
+        android:id="@+id/unbook_button"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginStart="200dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="#3F51B5"
+        android:text="UnBook"
+        android:textColor="#FFFFFF"
+        app:layout_constraintTop_toBottomOf="@+id/timeslotListView"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/bookText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="160dp"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        android:textColor="#00FFFF"
+        android:text="Unknown"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/unbook_button"/>
+
     <Button
         android:id="@+id/back_button"
         android:layout_width="wrap_content"

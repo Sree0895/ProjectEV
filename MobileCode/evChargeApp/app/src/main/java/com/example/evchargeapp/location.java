@@ -19,6 +19,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,11 +40,14 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import static java.lang.Math.round;
+
 public class location extends AppCompatActivity {
 
     Button mBackButton;
     Spinner mSpinnerState ;
     Spinner mSpinnerDistricts;
+    private static Spinner mSpinnerEvs;
 
     private String host;
     private String clientId;
@@ -51,22 +55,28 @@ public class location extends AppCompatActivity {
     private String userName;
     private String passWord = "";
     private static String mMqttRxdata;
-    private String mState = "";
-    private String mDistrict = "";
+    private static String mState = "";
+    private static String mDistrict = "";
     private String mEv = "";
     private static String mLocationTopic = "";
 
     private GpsTracker gpsTracker;
 
-    double mCurrLatitude ;
-    double mCurrLongitude;
-    double mDestLatitude ;
-    double mDestLongitude;
+    static double mCurrLatitude ;
+    static double mCurrLongitude;
+    static double mDestLatitude ;
+    static double mDestLongitude;
 
-    ListView mLocationListView;
-    List<String> tutorials = new ArrayList<>();
+    private static ListView mLocationListView;
 
     private static ArrayList<String> mDistrictList;
+    private static ArrayList<String> mEvcsList;
+    private static ArrayList<String> mEvcsLatList;
+    private static ArrayList<String> mEvcsLonList;
+    private static ArrayList<String> mEvcsInfoList;
+
+    private static ArrayAdapter adapterEvs;
+    private static ArrayAdapter adapterDistrict;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +85,18 @@ public class location extends AppCompatActivity {
 
         mDistrictList = new ArrayList<>();
         mDistrictList.clear();
+
+        mEvcsList = new ArrayList<>();
+        mEvcsList.clear();
+
+        mEvcsInfoList = new ArrayList<>();
+        mEvcsInfoList.clear();
+
+        mEvcsLatList = new ArrayList<>();
+        mEvcsLatList.clear();
+
+        mEvcsLonList = new ArrayList<>();
+        mEvcsLonList.clear();
 
         try {
             if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ) {
@@ -97,18 +119,33 @@ public class location extends AppCompatActivity {
         clientId = config.getClientId();
 
         mqttInstance = new mqttClass(getApplicationContext(), host, clientId, "pi", passWord, mHandler);
-
+        mqttInstance.mqttConnect("");
         mSpinnerState = (Spinner) findViewById(R.id.spinnerStates);
         mSpinnerDistricts = (Spinner) findViewById(R.id.spinnerDistricts);
-        mSpinnerDistricts.setBackgroundColor(Color.WHITE);
-        mSpinnerState = (Spinner) findViewById(R.id.spinnerStates);
-        // Create an ArrayAdapter using the string array and a default spinner layout
+        mLocationListView = findViewById(R.id.locationListView);
+
+        adapterEvs = new ArrayAdapter<>(getApplicationContext(),android.R.layout.simple_spinner_item, mEvcsInfoList);
+        adapterEvs.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mLocationListView.setAdapter(adapterEvs);
+
+        mSpinnerState.setBackgroundColor(Color.GRAY);
+        mSpinnerDistricts.setBackgroundColor(Color.GRAY);
+        mLocationListView.setBackgroundColor(Color.GRAY);
+
+
+
+       // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.states_list, android.R.layout.simple_spinner_item);
         // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Apply the adapter to the spinner
         mSpinnerState.setAdapter(adapter);
+        mSpinnerState.setSelection(0);
+
+        mState = mSpinnerState.getSelectedItem().toString();
+        mState.toLowerCase();
+        readXml(mState.toLowerCase()+".xml", mDistrictList);
 
         mSpinnerState.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
         {
@@ -117,10 +154,19 @@ public class location extends AppCompatActivity {
                 mState = mSpinnerState.getSelectedItem().toString();
                 mState.toLowerCase();
                 mDistrictList.clear();
-                readXml(mState.toLowerCase()+".xml", mDistrictList);
-                ArrayAdapter adapterDistrict = new ArrayAdapter<>(getApplicationContext(),android.R.layout.simple_spinner_item, mDistrictList);
-                adapterDistrict.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                mSpinnerDistricts.setAdapter(adapterDistrict);
+                mEvcsList.clear();
+                mEvcsInfoList.clear();
+                if(!mState.isEmpty()) {
+                    readXml(mState.toLowerCase() + ".xml", mDistrictList);
+                    adapterDistrict = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_item, mDistrictList);
+                    adapterDistrict.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    mSpinnerDistricts.setAdapter(adapterDistrict);
+
+                    adapterEvs = new ArrayAdapter<>(getApplicationContext(),android.R.layout.simple_spinner_item, mEvcsInfoList);
+                    adapterEvs.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    // Apply the adapter to the spinner
+                    mLocationListView.setAdapter(adapterEvs);
+                }
             }
 
             @Override
@@ -128,30 +174,44 @@ public class location extends AppCompatActivity {
             }
         });
 
-        mState = mSpinnerState.getSelectedItem().toString();
-        mState.toLowerCase();
-        readXml(mState.toLowerCase()+".xml", mDistrictList);
-
-        // Create an ArrayAdapter using the string array and a default spinner layout
-        ArrayAdapter<CharSequence> adapterDistrict = ArrayAdapter.createFromResource(this,
-                R.array.Telangana, android.R.layout.simple_spinner_item);
-        // Specify the layout to use when the list of choices appears
-        adapterDistrict.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        // Apply the adapter to the spinner
-        mSpinnerDistricts.setAdapter(adapterDistrict);
 
         mSpinnerDistricts.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
         {
             @Override
             public void onItemSelected(AdapterView<?> arg0, View arg1, int position, long id) {
-                mDistrict=mSpinnerDistricts.getSelectedItem().toString();
-                mLocationTopic = "topic/locations/" + config.getEvVendor() + "/" + mState + "/" + mDistrict  ;
-                mqttInstance.mqttConnect(mLocationTopic);
+                mEvcsList.clear();
+                mEvcsInfoList.clear();
+                adapterEvs = new ArrayAdapter<>(getApplicationContext(),android.R.layout.simple_spinner_item, mEvcsInfoList);
+                adapterEvs.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                mLocationListView.setAdapter(adapterEvs);
+
+                mDistrict = mSpinnerDistricts.getSelectedItem().toString();
+                mqttInstance.unsubscribeTopic(mLocationTopic);
+                if (!mDistrict.isEmpty()){
+                    mLocationTopic = "topic/locationService/" + config.getEvVendor() + "/" + mState + "/" + mDistrict;
+                Log.i("Test1", mLocationTopic);
+                mqttInstance.subscribeTopic(mLocationTopic);
+                }
             }
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
             }
         });
+
+        mLocationListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                mDestLatitude = Double.parseDouble(mEvcsLatList.get(position));
+                mDestLongitude = Double.parseDouble(mEvcsLonList.get(position));
+                final Intent intent = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("http://maps.google.com/maps?"
+                                + "saddr="+ mCurrLatitude+","+mCurrLongitude + "&daddr="+ mDestLatitude+","+mDestLongitude  ));
+
+                intent.setClassName("com.google.android.apps.maps","com.google.android.maps.MapsActivity");
+                startActivity(intent);
+            }
+        });
+
 
         mBackButton = findViewById(R.id.back_button);
         mBackButton.setOnClickListener(new View.OnClickListener() {
@@ -164,62 +224,9 @@ public class location extends AppCompatActivity {
                 finish();
             }
         });
-
-/*        Bundle bundle = getIntent().getExtras();
-        ArrayList<String> arraylist = (ArrayList<String>)getIntent().getSerializableExtra("key");
-        ArrayList<JSONObject> jsonlist = new ArrayList<JSONObject>();
-
-        int i =0;
-        for (String temp : arraylist) {
-            try {
-
-                    JSONArray array = new JSONArray( "["+ temp + "]");
-                    JSONObject object = array.getJSONObject(0);
-                    String evcsName = object.getString("evcsName");
-                    double lattitude = object.getDouble("evcsLat");
-                    double longitude = object.getDouble("evcsLon");
-                    double distance = getDistance(mCurrLatitude,lattitude,mCurrLongitude,longitude);
-                    String display = evcsName + " located at " +  distance;
-                    tutorials.add(display);
-                    jsonlist.add(object);
-            }
-            catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }*/
-
-        mLocationListView = findViewById(R.id.locationListView);
-        ArrayAdapter<String> arr;
-        arr = new ArrayAdapter<String>(
-                this,
-                R.layout.support_simple_spinner_dropdown_item,
-                tutorials);
-        mLocationListView.setAdapter(arr);
-
-        mLocationListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-/*                try {
-                    JSONObject object = jsonlist.get(position);
-                    mDestLatitude = object.getDouble("evcsLat");
-                    mDestLongitude = object.getDouble("evcsLon");
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }*/
-
-                final Intent intent = new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("http://maps.google.com/maps?"
-                                + "saddr="+ mCurrLatitude+","+mCurrLongitude + "&daddr="+ mDestLatitude+","+mDestLongitude  ));
-
-                intent.setClassName("com.google.android.apps.maps","com.google.android.maps.MapsActivity");
-
-                startActivity(intent);
-            }
-        });
     }
 
-    public double getDistance(double currlat,
+    public static double getDistance(double currlat,
                                      double accidlat, double currlon,
                                      double accidlon)
     {
@@ -303,10 +310,21 @@ public class location extends AppCompatActivity {
             int code = object.getInt("code");
             switch (code)
             {
-                case 3003:
-                    //
-                    break;
-                case 3002:
+                case 1001:
+                    if((object.getString("evcsDistrict").compareTo(mDistrict) == 0) && (object.getString("evcsState").compareTo(mState) == 0) )
+                    if (!mEvcsList.contains(object.getString("evcsId"))) {
+                        mEvcsList.add(object.getString("evcsId"));
+                        mEvcsLonList.add(object.getString("evcsLon"));
+                        mEvcsLatList.add(object.getString("evcsLat"));
+                        double distance = getDistance(mCurrLatitude,Double.parseDouble(object.getString("evcsLat")), mCurrLongitude,Double.parseDouble(object.getString("evcsLon")) );
+
+                        mDestLatitude = Double.parseDouble(object.getString("evcsLat"));
+                        mDestLongitude = Double.parseDouble(object.getString("evcsLon"));
+
+                        mEvcsInfoList.add(object.getString("evcsName") + " ( Approximate " + Double.toString(round(distance)) + " km)" );
+                        adapterEvs.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        mLocationListView.setAdapter(adapterEvs);
+                    }
                     break;
                 default:
                     break;

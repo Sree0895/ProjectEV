@@ -116,7 +116,7 @@ public class chargeType extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), chargeStatus.class);
                 startActivity(intent);
-                finish();
+                //finish();
             }
         });
     }

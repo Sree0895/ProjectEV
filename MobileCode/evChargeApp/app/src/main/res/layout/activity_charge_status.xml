@@ -178,7 +178,6 @@
         app:layout_constraintLeft_toRightOf="@+id/startTimeText"
         app:layout_constraintTop_toBottomOf="@+id/vehicleNumberTextVal" />
 
-
     <TextView
         android:id="@+id/endTimeTextVal"
         android:layout_width="wrap_content"
@@ -245,6 +244,84 @@
         tools:layout_editor_absoluteY="524dp"
         app:constraint_referenced_ids="chargeValText,progressBar,userNameText,userNameTextVal,vehicleNumberText,vehicleNumberTextVal,startTimeText,startTimeTextVal,controlbtn,endTimeText,endTimeTextVal,chargeConText,chargeConTextVal,costText,costTextVal,imageView2"/>
 
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Charge control"
+        android:textColor="@color/zxing_possible_result_points"
+        android:textSize="36sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/userNameText" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup"
+        android:layout_width="400dp"
+        android:layout_height="150dp"
+        android:layout_marginStart="16dp"
+        android:orientation="vertical"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView">
+
+        <RadioButton
+            android:id="@+id/userControlradioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="25dp"
+            android:layout_marginTop="5dp"
+            android:checked="true"
+            android:textSize="20sp"
+            android:text="User control charging"
+            android:textColor="@color/purple_200"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+        <RadioButton
+            android:id="@+id/timeControlradioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginStart="25dp"
+            android:textSize="20sp"
+            android:text="Time-based charging"
+            android:textColor="@color/purple_200"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/userControlradioButton"/>
+
+        <RadioButton
+            android:id="@+id/percentageControlradioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginStart="25dp"
+            android:textSize="20sp"
+            android:text="Percentage-based charging"
+            android:textColor="@color/purple_200"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/spinnerTime"/>
+        />
+    </RadioGroup>
+
+    <Spinner
+        android:id="@+id/spinnerTime"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="5dp"
+        android:background="@color/teal_700"
+        android:textColor="#FFFFFF"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/radioGroup" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/group1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:layout_editor_absoluteX="202dp"
+        tools:layout_editor_absoluteY="524dp"
+        app:constraint_referenced_ids="radioGroup,scanBtn,textView"/>
 
 
 

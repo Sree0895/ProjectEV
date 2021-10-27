@@ -206,7 +206,8 @@ public class mqttClass implements Parcelable {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     Log.i(TAG, "connect succeed");
-                    subscribeTopic(topic);
+                    if(!topic.isEmpty())
+                        subscribeTopic(topic);
 
                     Bundle bundle = new Bundle();
                     Message msg = mHandler.obtainMessage();
@@ -259,7 +260,7 @@ public class mqttClass implements Parcelable {
 
     public void subscribeTopic(String topic) {
         try {
-            mqttAndroidClient.subscribe(topic, 0, null, new IMqttActionListener() {
+            mqttAndroidClient.subscribe(topic, 1, null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     Log.i(TAG, "subscribed succeed");
@@ -285,7 +286,7 @@ public class mqttClass implements Parcelable {
 
     public void unsubscribeTopic(String topic) {
         try {
-            mqttAndroidClient.subscribe(topic, 0, null, new IMqttActionListener() {
+            mqttAndroidClient.unsubscribe(topic, null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     Log.i(TAG, "unsubscribed succeed");
