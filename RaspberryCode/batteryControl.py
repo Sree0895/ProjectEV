@@ -15,7 +15,7 @@ import random
 TCP_IP_HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 TCP_IP_PORT = 9999         # Port to listen on (non-privileged ports are > 1023)
 
-class Backend(QObject):
+class Backend():
     stateOfCharge = 0.0
     batVolt = 0.0
     avgCurr = 0.0
