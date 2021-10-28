@@ -30,6 +30,7 @@ pip install paho-mqtt
 pip install pypng
 pip install PyQRCode
 pip install PyQt5
+pip install pymongo
 
 Once the required packages are installed, execute the command pip list to check the packages installed.
 It should look like below.
@@ -38,12 +39,52 @@ Package    Version
 ---------- -------
 paho-mqtt  1.5.1
 pip        21.1.1
+pymongo    3.12.1
 pypng      0.0.21
 PyQRCode   1.2.1
 PyQt5      5.15.4
 PyQt5-Qt5  5.15.2
-PyQt5-sip  12.9.0
+PyQt5-sip  12.9.0	
 setuptools 56.0.0
+
+Download the MongoDB community server from the following link.
+https://www.mongodb.com/try/download/community
+
+Use the mongodb-windows-x86_64-5.0.3-signed.msi for installing mongoDB database server on Windows 10.
+Refer the following link for installing the mongoDB and creating the database.
+https://www.prisma.io/dataguide/mongodb/setting-up-a-local-mongodb-database
+
+Specify the database name as bookingDataBase
+Specify the collection name as bookingCollection
+Select bookingCollection and Cick the "ADD DATA" button.
+Choose the "Insert Document" option and enter the following content 
+
+[
+{ "slot" : "0" , "user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{ "slot" : "1" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{ "slot" : "2" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{ "slot" : "3" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{ "slot" : "4" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{ "slot" : "5" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{ "slot" : "6" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{ "slot" : "7" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{ "slot" : "8" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{ "slot" : "9" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "10" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "11" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "12" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "13" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "14" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "15" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "16" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "17" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "18" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "19" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "20" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "21" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "22" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"}, 
+{  "slot" : "23" ,"user" : "null", "evNumber" : "null", "evcsManufacturer": "null","evcsState": "null","evcsDistrict": "null", "day":"null","month":"null","year":"null"} 
+]
 
 ---------------------------------------------------------
 PACKAGE INSTALLATION ON RASPBERRY PI
