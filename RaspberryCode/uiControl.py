@@ -18,12 +18,21 @@ import time
 from time import sleep
 import queue
 import logging
+import pymongo
+import datetime
 
 TCP_IP_HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 TCP_IP_PORT = 9999         # Port to listen on (non-privileged ports are > 1023)
 MQTT_HOST = "192.168.1.34" # Standard loopback interface address (localhost)
 MQTT_PORT = 1883           # Port to listen on (non-privileged ports are > 1023)
+MONGO_SERVER = "mongodb://localhost:27017/"
+MONGO_DATABASE_NAME = "bookingDataBase"
+MONGO_DATABASE_COLLECTION = "bookingCollection"
 
+
+mongClient = pymongo.MongoClient(MONGO_SERVER)
+mongDB = mongClient[MONGO_DATABASE_NAME]
+mongCollection = mongDB[MONGO_DATABASE_COLLECTION]
 
 logging.basicConfig(filename="uiControl.log",
                     format='%(asctime)s %(message)s',
@@ -44,6 +53,63 @@ global pubUserServiceTopic
 global pubBookingSlotServiceTopic
 global pubLocationServiceTopic
 
+
+def getBookingSlotStatus(slot,user,evNumber):
+    status = ""
+    currDateTime = datetime.datetime.now()
+    
+    evcsManufacturer= str(evcsInfo["evcsManufacturer"])
+    evcsState= str(evcsInfo["evcsState"])
+    evcsDistrict= str(evcsInfo["evcsDistrict"])
+    day=str(currDateTime.strftime("%d"))
+    month=str(currDateTime.strftime("%b"))
+    year= str(currDateTime.year)
+
+    query1 = { "$and": [{ "slot": { "$regex": "^" + slot  +"$"} }, { "user": { "$regex": "null" }}]}
+    query2 = { "slot": { "$regex": "^" + slot  +"$"} }
+    query3 = { "$and": [{ "slot": { "$regex": "^" + slot  +"$"} }, { "user": { "$regex": "^" + user  +"$"}}]}
+    newvalues = { "$set": { "user" : user,"evNumber" : evNumber,"evcsManufacturer": evcsManufacturer,"evcsState": evcsState,"evcsDistrict": evcsDistrict,"day":day, "month":month, "year":year} }
+
+    #Check if the booking already exists for the given slot
+    docResult0 = list (mongCollection.find(query3))
+    if(len(docResult0) == 0 ):
+        docResult1 = list (mongCollection.find(query1))
+        if(len(docResult1) != 0 ): 
+            mongCollection.update_one(query2,newvalues)
+            docResult2 = list (mongCollection.find(query3))
+            if(len(docResult2) != 0 ):
+                status="Booking Successful"
+            else:    
+                status="Try again"
+        else:
+            status= "Slot not available"
+    else:
+        status ="Booking already done" 
+    return status
+
+def getReleaseSlotStatus(slot,user):
+    nullVal = "null"
+    status = ""
+    
+    query1 = { "$and": [{ "slot": { "$regex": "^" + slot  +"$"} }, { "user": { "$regex": "null" }}]}
+    query2 = { "slot": { "$regex": "^" + slot  +"$"} }
+    query3 = { "$and": [{ "slot": { "$regex": "^" + slot  +"$"} }, { "user": { "$regex": "^" + user  +"$"}}]}
+    newvalues = { "$set": { "user" : nullVal,"evNumber" : nullVal,"evcsManufacturer": nullVal,"evcsState": nullVal,"evcsDistrict": nullVal,"day":nullVal, "month":nullVal, "year":nullVal} }
+
+    #Check if the booking already exists for the given slot
+    docResult0 = list (mongCollection.find(query3))
+    if(len(docResult0) != 0 ):
+        mongCollection.update_one(query2,newvalues)
+        docResult2 = list (mongCollection.find(query1))
+        if(len(docResult2) != 0 ):
+            status ="Release successful"
+        else:
+            status ="Release unsuccessful"       
+    else:
+        status ="Booking does not exist" 
+        
+    return status    
+    
 class tcpServerClient():
     clientsocket = None
     tempSocket = None    
@@ -529,8 +595,14 @@ class Backend(QObject):
             self.dispStartTime(self.currUserInfo.getStartTime())
             self.dispEndTime(self.currUserInfo.getEndTime())        
             self.dispUserName(self.currUserInfo.userName)      
-            self.dispEvNumber(self.currUserInfo.evNumber)                
-
+            self.dispEvNumber(self.currUserInfo.evNumber)
+            
+        if(Backend.authenticateRequest == ""):    
+            self.dispStartTime(self.currUserInfo.getStartTime())
+            self.dispEndTime(self.currUserInfo.getEndTime())        
+            self.dispUserName(self.currUserInfo.userName)      
+            self.dispEvNumber(self.currUserInfo.evNumber)
+            
     def checkForChargeCompletion(self):
         ret = False
         if( round(self.stateOfCharge,2) >= round(1.0,2)):
@@ -659,7 +731,7 @@ class Backend(QObject):
         TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
         TaskDict["evcsState"]= str(evcsInfo["evcsState"])
         TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
-        TaskDict["evcsName"]= "Statiion 1"
+        TaskDict["evcsName"]= "Station 2"
         TaskDict["evcsId"]= "EV002378"   
         TaskDict["evcsLat"]= "17.459"
         TaskDict["evcsLon"]= "78.349" 
@@ -751,15 +823,17 @@ class Backend(QObject):
         TaskDict["transactionType"]= "tx"
         pubTopic = "topic/bookingSlotServiceEvcs/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"]) + "/" + str(evcsInfo["evcsName"]) 
         TaskDict["topic"]= pubTopic
+        
+        slotId = findPosition(Backend.bookingSlotReq)
+        if(slotId != -1):
+            slotIdStr = str(slotId-1)
+            
         if(Backend.bookingRequest == True):
             TaskDict["code"]= "9003"
-            TaskDict["response"]= "Booking Success"
+            TaskDict["response"]= getBookingSlotStatus(slotIdStr,Backend.bookingUserName,Backend.bookingEvNumber)
         else:
             TaskDict["code"]= "9005"
-            TaskDict["response"]= "Release Success"
-        
-        if(Backend.bookingSlotReq < 256):
-            TaskDict["response"]= "Slot not available"
+            TaskDict["response"]= getReleaseSlotStatus(slotIdStr,Backend.bookingUserName)
 
         TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
         TaskDict["evcsState"]= str(evcsInfo["evcsState"])
@@ -804,7 +878,40 @@ class Backend(QObject):
         self.currUserInfo.setUserName(Backend.userName)
         self.currUserInfo.setEvNumber(Backend.evNumber)
         self.currUserInfo.setStartTime(strftime("%H:%M:%S", localtime()))      
-            
+
+# A utility function to check
+# whether n is power of 2 or
+# not.
+def isPowerOfTwo(n):
+    return (True if(n > 0 and
+                   ((n & (n - 1)) > 0))
+                 else False);
+     
+# Returns position of the
+# only set bit in 'n'
+def findPosition(n):
+    if (isPowerOfTwo(n) == True):
+        return -1;
+ 
+    i = 1;
+    pos = 1;
+ 
+    # Iterate through bits of n
+    # till we find a set bit i&n
+    # will be non-zero only when
+    # 'i' and 'n' have a set bit
+    # at same position
+    while ((i & n) == 0):
+         
+        # Unset current bit and
+        # set the next bit in 'i'
+        i = i << 1;
+ 
+        # increment position
+        pos += 1;
+ 
+    return pos;
+    
 tcpCommInstance = tcpServerClient("client")
 tcpCommInstance.createSocketConnection()
 if(tcpServerClient.connectionType == "server"):
