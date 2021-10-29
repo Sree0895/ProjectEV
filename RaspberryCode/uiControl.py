@@ -2,10 +2,8 @@
 import sys
 import os
 import pyqrcode
-#import QUrl
 from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtQml import QQmlApplicationEngine
-#from PyQt5.QtQuickView import QQuickView
 from PyQt5.QtQuick import QQuickView
 from PyQt5.QtCore import QUrl, QTimer, pyqtSignal, QObject
 from time import strftime, localtime
@@ -28,7 +26,7 @@ MQTT_PORT = 1883           # Port to listen on (non-privileged ports are > 1023)
 MONGO_SERVER = "mongodb://localhost:27017/"
 MONGO_DATABASE_NAME = "bookingDataBase"
 MONGO_DATABASE_COLLECTION = "bookingCollection"
-
+SIMULATE_OTHER_STATIONS = False
 
 mongClient = pymongo.MongoClient(MONGO_SERVER)
 mongDB = mongClient[MONGO_DATABASE_NAME]
@@ -54,6 +52,26 @@ global pubBookingSlotServiceTopic
 global pubLocationServiceTopic
 
 
+def set_bit(value, bit):
+    return value | (1<<bit)
+
+def clear_bit(value, bit):
+    return value & ~(1<<bit)
+    
+   
+def getFreeSlotStatus():
+    slotList = 0
+    slotCount = 0
+    for slot in range(0,24):
+        query = { "slot": { "$regex": "^" + str(slot)  +"$"} }
+        listAr = list((mongCollection.find(query,{"_id":0})))
+        jsonObj = json.loads(json.dumps(listAr[0]))
+        if(jsonObj["user"] == "null"):
+            slotList = set_bit(slotList,slot)
+            slotCount = slotCount + 1
+            
+    return slotList,slotCount     
+        
 def getCurrentSlotInfo():
     currDateTime = datetime.datetime.now()
     currHour = currDateTime.strftime("%H")
@@ -450,8 +468,6 @@ class chargerControl():
         self.scheduler.addToTaskQueue(TaskObject)
         
 class Backend(QObject):
-    updated = pyqtSignal(str, arguments=['time'])
-
     userName = ""
     evNumber = ""
     evChargeControl = "" 
@@ -477,6 +493,7 @@ class Backend(QObject):
     evChargeOptionParam = -1 
     evChargeTime  = 0
     terminationType = "unknown"
+    evChargingCost = 50.0
     
     bookingRequest = ""        
     bookingUserName = ""
@@ -506,7 +523,6 @@ class Backend(QObject):
         self.timer2.setInterval(20)  # msecs 100 = 1/10th sec
         self.timer2.timeout.connect(self.executeTask)
         
-        self.tenSecTimerCnt = 0
         self.fiveSecTimerCnt = 0
 
     def resetBEParams(self):
@@ -535,6 +551,7 @@ class Backend(QObject):
         Backend.evChargeOptionParam = -1 
         Backend.evChargeTime  = 0
         Backend.terminationType = "unknown"
+        Backend.evChargingCost = 50.0
         
         Backend.bookingRequest = ""        
         Backend.bookingUserName = ""
@@ -553,20 +570,16 @@ class Backend(QObject):
         self.scheduler.executeFromTaskQueue()       
 
     def update_time(self):
-        # Pass the current time to QML
-        curr_time = strftime("%H:%M:%S", localtime())
-        self.updated.emit(curr_time)
-              
+             
         self.periodicTcpData()
         self.updateSlotDisplay()
         
-        if(self.tenSecTimerCnt%10 == 0):
+        if(self.fiveSecTimerCnt%5 == 0):
             self.sendEvStatusMsg()
             self.sendLocationServiceMsg()
-            self.sendLocationServiceMsg1()
             self.sendBookingServiceMsg()
             self.sendSubBookingServiceMsg()
-        self.tenSecTimerCnt = self.tenSecTimerCnt + 1   
+        self.fiveSecTimerCnt = self.fiveSecTimerCnt + 1   
         
         if(Backend.bookingRequest != ""):
             self.processBookingRequest()
@@ -603,6 +616,8 @@ class Backend(QObject):
                 self.displayBatteryConnect(False)
                 self.displayBatteryDisconnect(False)
                 if(self.evChargeControl == "On"):
+                    Backend.evChargingCost = Backend.evChargingCost + 0.15
+                    self.dispCost( "Rs. "+ str(round(Backend.evChargingCost,2)) )
                     self.displayBattery(True)
                     self.setChargingStatus(True)
                     self.setBatteryLevel(self.stateOfCharge)
@@ -687,6 +702,7 @@ class Backend(QObject):
         TaskDict["termination"]= Backend.terminationType
         TaskDict["evChargeOption"]= Backend.evChargeOption
         TaskDict["evChargeOptionParam"]= Backend.evChargeOptionParam
+        TaskDict["evChargingCost"]= round(Backend.evChargingCost,2)
         TaskDict["TimeStamp"]= str((int)(time.time()))        
                 
         TaskStr = json.dumps(TaskDict, indent = 4)
@@ -710,6 +726,7 @@ class Backend(QObject):
         TaskDict["termination"]= Backend.terminationType
         TaskDict["evChargeOption"]= Backend.evChargeOption
         TaskDict["evChargeOptionParam"]= Backend.evChargeOptionParam
+        TaskDict["evChargingCost"]= Backend.evChargingCost
         TaskDict["TimeStamp"]= str((int)(time.time()))        
                 
         TaskStr = json.dumps(TaskDict, indent = 4)
@@ -735,6 +752,26 @@ class Backend(QObject):
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
         self.scheduler.addToTaskQueue(TaskObject)
+        
+        if(SIMULATE_OTHER_STATIONS == True):
+            TaskDict ={}
+            TaskDict["commType"]= "mqtt"
+            TaskDict["transactionType"]= "tx"
+            pubTopic = "topic/locationService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"])
+            TaskDict["topic"]= pubTopic
+            TaskDict["code"]= "1001"
+            TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
+            TaskDict["evcsState"]= str(evcsInfo["evcsState"])
+            TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
+            TaskDict["evcsName"]= "Statiion 1"
+            TaskDict["evcsId"]= "EV002378"    
+            TaskDict["evcsLat"]= "17.459"
+            TaskDict["evcsLon"]= "78.349"
+            TaskDict["TimeStamp"]= str((int)(time.time()))
+                
+            TaskStr = json.dumps(TaskDict, indent = 4)
+            TaskObject = json.loads(TaskStr)
+            self.scheduler.addToTaskQueue(TaskObject)        
 
     def sendBookingServiceMsg(self):
         TaskDict ={}
@@ -756,24 +793,25 @@ class Backend(QObject):
         TaskObject = json.loads(TaskStr)
         self.scheduler.addToTaskQueue(TaskObject)
 
-        TaskDict ={}
-        TaskDict["commType"]= "mqtt"
-        TaskDict["transactionType"]= "tx"
-        pubTopic = "topic/bookingSlotService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"])
-        TaskDict["topic"]= pubTopic
-        TaskDict["code"]= "9001"
-        TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
-        TaskDict["evcsState"]= str(evcsInfo["evcsState"])
-        TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
-        TaskDict["evcsName"]= "Station 2"
-        TaskDict["evcsId"]= "EV002378"   
-        TaskDict["evcsLat"]= "17.459"
-        TaskDict["evcsLon"]= "78.349" 
-        TaskDict["TimeStamp"]= str((int)(time.time()))
-        
-        TaskStr = json.dumps(TaskDict, indent = 4)
-        TaskObject = json.loads(TaskStr)
-        self.scheduler.addToTaskQueue(TaskObject)
+        if(SIMULATE_OTHER_STATIONS == True):
+            TaskDict ={}
+            TaskDict["commType"]= "mqtt"
+            TaskDict["transactionType"]= "tx"
+            pubTopic = "topic/bookingSlotService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"])
+            TaskDict["topic"]= pubTopic
+            TaskDict["code"]= "9001"
+            TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
+            TaskDict["evcsState"]= str(evcsInfo["evcsState"])
+            TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
+            TaskDict["evcsName"]= "Station 2"
+            TaskDict["evcsId"]= "EV002378"   
+            TaskDict["evcsLat"]= "17.459"
+            TaskDict["evcsLon"]= "78.349" 
+            TaskDict["TimeStamp"]= str((int)(time.time()))
+            
+            TaskStr = json.dumps(TaskDict, indent = 4)
+            TaskObject = json.loads(TaskStr)
+            self.scheduler.addToTaskQueue(TaskObject)
         
     def sendSubBookingServiceMsg(self):
         TaskDict ={}
@@ -787,37 +825,14 @@ class Backend(QObject):
         TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
         TaskDict["evcsName"]= str(evcsInfo["evcsName"])
         TaskDict["evcsId"]= str(evcsInfo["evcsId"])     
-        TaskDict["freeSlots"] = self.getFreeSlotList()
+        TaskDict["freeSlots"], slotCnt = getFreeSlotStatus()
         TaskDict["TimeStamp"]= str((int)(time.time()))
-            
-            
+             
+        self.dispFreeSlots(str(slotCnt) + "/24")     
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
         self.scheduler.addToTaskQueue(TaskObject)
-        
-    def getFreeSlotList(self):
-        return 12
-        
-    def sendLocationServiceMsg1(self):
-        TaskDict ={}
-        TaskDict["commType"]= "mqtt"
-        TaskDict["transactionType"]= "tx"
-        pubTopic = "topic/locationService/" + str(evcsInfo["evcsManufacturer"]) + "/" + str(evcsInfo["evcsState"]) + "/" + str(evcsInfo["evcsDistrict"])
-        TaskDict["topic"]= pubTopic
-        TaskDict["code"]= "1001"
-        TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
-        TaskDict["evcsState"]= str(evcsInfo["evcsState"])
-        TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
-        TaskDict["evcsName"]= "Statiion 1"
-        TaskDict["evcsId"]= "EV002378"    
-        TaskDict["evcsLat"]= "17.459"
-        TaskDict["evcsLon"]= "78.349"
-        TaskDict["TimeStamp"]= str((int)(time.time()))
-            
-        TaskStr = json.dumps(TaskDict, indent = 4)
-        TaskObject = json.loads(TaskStr)
-        self.scheduler.addToTaskQueue(TaskObject)
-        
+                      
     def sendEvStatusMsg(self):
         TaskDict ={}
         TaskDict["commType"]= "mqtt"
@@ -847,7 +862,6 @@ class Backend(QObject):
         self.scheduler.addToTaskQueue(TaskObject)
         
     def periodicTcpData(self):
-        #if(Backend.batDect == "1"):
         self.chargerControlInstance.getChargingStatus()
         self.chargerControlInstance.getBatDectStatus()
 
@@ -914,7 +928,7 @@ class Backend(QObject):
         engine.rootObjects()[0].setProperty("uiEndTime", endTime)
 
     def dispCurrTime(self):
-        engine.rootObjects()[0].setProperty("uiCurrentTime", str(datetime.datetime.now().strftime("%H:%M:%S")))
+        engine.rootObjects()[0].setProperty("uiCurrentTime", str(datetime.datetime.now().strftime("%H:%M:%S, %d %B %Y")))
 
     def dispCurrSlot(self,currSlot):
         engine.rootObjects()[0].setProperty("uiCurrentSlot", currSlot)
@@ -924,6 +938,12 @@ class Backend(QObject):
     
     def dispCost(self,cost):
         engine.rootObjects()[0].setProperty("uiCostVal", cost)
+
+    def dispEvcsName(self,name):
+        engine.rootObjects()[0].setProperty("uiEvcsName", name)
+
+    def dispFreeSlots(self,slotCount):
+        engine.rootObjects()[0].setProperty("uiFreeSlots", slotCount)
         
     def recordUserInfo(self):
         self.currUserInfo.setUserName(Backend.userName)
@@ -1009,6 +1029,8 @@ beInstance.dispCurrTime()
 beInstance.dispCurrSlot("---")
 beInstance.dispNextSlot("---")
 beInstance.dispCost("TBD")
+beInstance.dispEvcsName(evcsInfo["evcsName"])
+beInstance.dispFreeSlots("---")
     
 beInstance.startTimers()
 

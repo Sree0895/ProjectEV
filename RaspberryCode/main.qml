@@ -11,6 +11,7 @@ ApplicationWindow {
 	property real chargeVal
 	property bool batDisp
 	property bool chargeOnOff
+	property string uiEvcsName
 	property string uiName
 	property string uiEvId
 	property string uiStartTime
@@ -18,7 +19,8 @@ ApplicationWindow {
 	property string uiCurrentTime
 	property string uiCurrentSlot
 	property string uiNextSlot
-	property string uiCostVal	
+	property string uiCostVal
+	property string uiFreeSlots	
 	property bool batDect
 	property bool batUnDect
 	
@@ -41,9 +43,22 @@ ApplicationWindow {
 		font.family: "Helvetica"
 		font.pointSize: 50
 		font.bold: true
-		color: "white"
+		color: "#c71585"
 	}
 
+	Text 
+	{
+		id: evcsName
+		anchors.top: title.bottom
+		anchors.topMargin: 35
+		anchors.horizontalCenter: parent.horizontalCenter
+		text: uiEvcsName
+		font.family: "Helvetica"
+		font.pointSize: 35
+		font.bold: true
+		color: "orange"
+	}
+	
     UiBattery {
         id: battery
 		x:150
@@ -67,7 +82,7 @@ ApplicationWindow {
 		text: "Connect to \ncharging \npoint"
 		font.family: "Helvetica"
 		font.pointSize: 40
-		color: "yellow"
+		color: "#ffd700"
 		font.bold: true
 		visible: !batDisp
 		wrapMode: Text.WordWrap
@@ -78,7 +93,7 @@ ApplicationWindow {
 	Image 
 	{
         id: connectImage
-		x:300
+		x:170
 		y:650
 		width: 300
 		height: 300
@@ -90,7 +105,7 @@ ApplicationWindow {
 	Image 
 	{
         id: disconnectImage
-		x:300
+		x:170
 		y:650
 		width: 300
 		height: 300
@@ -147,7 +162,7 @@ ApplicationWindow {
 		font.family: "Helvetica"
 		font.pointSize: 40
 		font.bold: true
-		color: "green"
+		color: "#00ff7f"
 		wrapMode: Text.WordWrap
 		visible: !batDisp
 	}
@@ -173,7 +188,7 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "white"
+				color: "#40e0d0"
 			}
 			Text 
 			{
@@ -182,7 +197,7 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "red"
+				color: "#deb887"
 			}		
 		}
 
@@ -200,7 +215,7 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "white"
+				color: "#40e0d0"
 			}
 			
 			Text 
@@ -210,7 +225,7 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "red"
+				color: "#deb887"
 			}
 		}
 		
@@ -228,7 +243,7 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "white"
+				color: "#40e0d0"
 			}
 			
 			Text 
@@ -238,7 +253,7 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "red"
+				color: "#deb887"
 			}
 		}
 
@@ -256,7 +271,7 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "white"
+				color: "#40e0d0"
 			}
 			Text 
 			{
@@ -265,41 +280,42 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "red"
+				color: "#deb887"
 			}
 		}
+		
+		Row
+		{
+			id: row5
+			anchors.top: column1.top
+			anchors.topMargin: 250			
+			spacing: 30			
+
+			Text 
+			{
+				id: cost
+				text: "Cost :"
+				font.family: "Helvetica"
+				font.pointSize: 20
+				font.bold: true
+				color: "#40e0d0"
+			}
+			Text 
+			{
+				id: costVal
+				text: uiCostVal
+				font.family: "Helvetica"
+				font.pointSize: 20
+				font.bold: true
+				color: "#deb887"
+			}
+		}		
     }
 
-	Row
-	{
-		id: row5
-		x:1250
-		y:620
-		visible: batDisp	
-		spacing: 30		
 
-		Text 
-		{
-			id: cost
-			text: "Cost :"
-			font.family: "Helvetica"
-			font.pointSize: 20
-			font.bold: true
-			color: "white"
-		}
-		Text 
-		{
-			id: costVal
-			text: uiCostVal
-			font.family: "Helvetica"
-			font.pointSize: 20
-			font.bold: true
-			color: "red"
-		}
-	}
     Rectangle {
 		id: column2
-		x:750
+		x:600
 		y:720
 		
 		Row
@@ -316,7 +332,7 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "white"
+				color: "#40e0d0"
 			}
 			Text 
 			{
@@ -325,7 +341,7 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "red"
+				color: "#ff7f50"
 			}		
 		}
 
@@ -339,11 +355,11 @@ ApplicationWindow {
 			{
 				anchors.top: currentTime.bottom
 				id: currentSlot
-				text: "Current Slot:"
+				text: "Current hour slot :"
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "white"
+				color: "#40e0d0"
 			}
 			
 			Text 
@@ -353,7 +369,7 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "red"
+				color: "#ff7f50"
 			}
 		}
 		
@@ -367,11 +383,11 @@ ApplicationWindow {
 			{
 				anchors.top: currentSlot.bottom
 				id: nextSlot
-				text: "Next Slot:"
+				text: "Next hour slot :"
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "white"
+				color: "#40e0d0"
 			}
 			
 			Text 
@@ -381,10 +397,37 @@ ApplicationWindow {
 				font.family: "Helvetica"
 				font.pointSize: 20
 				font.bold: true
-				color: "red"
+				color: "#ff7f50"
 			}
 		}
-	
+
+		Row
+		{
+			id: rowFreeSlots
+			anchors.top: column2.top
+			anchors.topMargin: 200			
+			spacing: 30
+			Text 
+			{
+				anchors.top: rowNextSlot.bottom
+				id: freeSlots
+				text: "Total free slots :"
+				font.family: "Helvetica"
+				font.pointSize: 20
+				font.bold: true
+				color: "#40e0d0"
+			}
+			
+			Text 
+			{
+				id: freeSlotsVal
+				text: uiFreeSlots
+				font.family: "Helvetica"
+				font.pointSize: 20
+				font.bold: true
+				color: "#ff7f50"
+			}
+		}	
     }
 	
     Row {
