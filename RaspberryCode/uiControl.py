@@ -54,6 +54,39 @@ global pubBookingSlotServiceTopic
 global pubLocationServiceTopic
 
 
+def getCurrentSlotInfo():
+    currDateTime = datetime.datetime.now()
+    currHour = currDateTime.strftime("%H")
+    slot=str(currHour)
+    query = { "slot": { "$regex": "^" + slot  +"$"} }
+
+    listAr = list((mongCollection.find(query,{"_id":0})))
+    jsonObj = json.loads(json.dumps(listAr[0]))
+    
+    if(jsonObj["user"] != "null"):
+        result = "Allocated to " + jsonObj["user"] + ":"+ jsonObj["evNumber"]
+    else:
+        result = "Available"
+    return result
+    
+def getNextSlotInfo():
+    currDateTime = datetime.datetime.now()
+    currHour = int (currDateTime.strftime("%H"))
+    currHour = currHour + 1
+    currHour = currHour%24
+
+    slot=str(currHour)
+    query = { "slot": { "$regex": "^" + slot  +"$"} }
+
+    listAr = list((mongCollection.find(query,{"_id":0})))
+    jsonObj = json.loads(json.dumps(listAr[0]))
+    
+    if(jsonObj["user"] != "null"):
+        result = "Allocated to " + jsonObj["user"] + ":"+ jsonObj["evNumber"]
+    else:
+        result = "Available"
+    return result
+    
 def getBookingSlotStatus(slot,user,evNumber):
     status = ""
     currDateTime = datetime.datetime.now()
@@ -525,6 +558,7 @@ class Backend(QObject):
         self.updated.emit(curr_time)
               
         self.periodicTcpData()
+        self.updateSlotDisplay()
         
         if(self.tenSecTimerCnt%10 == 0):
             self.sendEvStatusMsg()
@@ -846,7 +880,12 @@ class Backend(QObject):
         TaskStr = json.dumps(TaskDict, indent = 4)
         TaskObject = json.loads(TaskStr)
         self.scheduler.addToTaskQueue(TaskObject)
-        
+    
+    def updateSlotDisplay(self):
+        self.dispCurrTime()
+        self.dispCurrSlot(getCurrentSlotInfo())
+        self.dispNextSlot(getNextSlotInfo())
+       
     def displayBatteryConnect(self,status):
         engine.rootObjects()[0].setProperty("batDect", status)
 
@@ -874,6 +913,18 @@ class Backend(QObject):
     def dispEndTime(self,endTime):
         engine.rootObjects()[0].setProperty("uiEndTime", endTime)
 
+    def dispCurrTime(self):
+        engine.rootObjects()[0].setProperty("uiCurrentTime", str(datetime.datetime.now().strftime("%H:%M:%S")))
+
+    def dispCurrSlot(self,currSlot):
+        engine.rootObjects()[0].setProperty("uiCurrentSlot", currSlot)
+
+    def dispNextSlot(self,nexSlot):
+        engine.rootObjects()[0].setProperty("uiNextSlot", nexSlot)
+    
+    def dispCost(self,cost):
+        engine.rootObjects()[0].setProperty("uiCostVal", cost)
+        
     def recordUserInfo(self):
         self.currUserInfo.setUserName(Backend.userName)
         self.currUserInfo.setEvNumber(Backend.evNumber)
@@ -954,6 +1005,11 @@ beInstance.dispStartTime("")
 beInstance.dispEndTime("")
 beInstance.displayBatteryConnect(False)
 beInstance.displayBatteryDisconnect(False)
+beInstance.dispCurrTime()
+beInstance.dispCurrSlot("---")
+beInstance.dispNextSlot("---")
+beInstance.dispCost("TBD")
+    
 beInstance.startTimers()
 
 sys.exit(app.exec())

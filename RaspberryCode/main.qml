@@ -8,17 +8,17 @@ ApplicationWindow {
     height: 1080
 	flags: Qt.FramelessWindowHint | Qt.Window
 	
-    property QtObject backend
-	property QtObject clockBackend
 	property real chargeVal
 	property bool batDisp
 	property bool chargeOnOff
-    property string currTime: "00:00:00"
 	property string uiName
 	property string uiEvId
 	property string uiStartTime
 	property string uiEndTime
-	property real testVal: 0.1
+	property string uiCurrentTime
+	property string uiCurrentSlot
+	property string uiNextSlot
+	property string uiCostVal	
 	property bool batDect
 	property bool batUnDect
 	
@@ -267,9 +267,126 @@ ApplicationWindow {
 				font.bold: true
 				color: "red"
 			}
-		}		
+		}
     }
 
+	Row
+	{
+		id: row5
+		x:1250
+		y:620
+		visible: batDisp	
+		spacing: 30		
+
+		Text 
+		{
+			id: cost
+			text: "Cost :"
+			font.family: "Helvetica"
+			font.pointSize: 20
+			font.bold: true
+			color: "white"
+		}
+		Text 
+		{
+			id: costVal
+			text: uiCostVal
+			font.family: "Helvetica"
+			font.pointSize: 20
+			font.bold: true
+			color: "red"
+		}
+	}
+    Rectangle {
+		id: column2
+		x:750
+		y:720
+		
+		Row
+		{
+			id: rowCurrTime
+			anchors.top: column2.top
+			anchors.topMargin: 50
+			
+			spacing: 30
+			Text 
+			{
+				id: currentTime
+				text: "Current Time :"
+				font.family: "Helvetica"
+				font.pointSize: 20
+				font.bold: true
+				color: "white"
+			}
+			Text 
+			{
+				id: currentTimeVal
+				text: uiCurrentTime
+				font.family: "Helvetica"
+				font.pointSize: 20
+				font.bold: true
+				color: "red"
+			}		
+		}
+
+		Row
+		{
+			id: rowCurrSlot
+			anchors.top: column2.top
+			anchors.topMargin: 100			
+			spacing: 30		
+			Text 
+			{
+				anchors.top: currentTime.bottom
+				id: currentSlot
+				text: "Current Slot:"
+				font.family: "Helvetica"
+				font.pointSize: 20
+				font.bold: true
+				color: "white"
+			}
+			
+			Text 
+			{
+				id: currentSlotVal
+				text: uiCurrentSlot
+				font.family: "Helvetica"
+				font.pointSize: 20
+				font.bold: true
+				color: "red"
+			}
+		}
+		
+		Row
+		{
+			id: rowNextSlot
+			anchors.top: column2.top
+			anchors.topMargin: 150			
+			spacing: 30
+			Text 
+			{
+				anchors.top: currentSlot.bottom
+				id: nextSlot
+				text: "Next Slot:"
+				font.family: "Helvetica"
+				font.pointSize: 20
+				font.bold: true
+				color: "white"
+			}
+			
+			Text 
+			{
+				id: nextSlotVal
+				text: uiNextSlot
+				font.family: "Helvetica"
+				font.pointSize: 20
+				font.bold: true
+				color: "red"
+			}
+		}
+	
+    }
+	
     Row {
         anchors.horizontalCenter: battery.horizontalCenter
         anchors.bottom: battery.bottom
