@@ -37,9 +37,9 @@ ApplicationWindow {
 	Text 
 	{
 		id: title
-		x:350
+		anchors.horizontalCenter: parent.horizontalCenter
 		y:50
-		text: "GEEKS EV CHARGING STATION"
+		text: "GEEKS EV CHARGING SERVICES"
 		font.family: "Helvetica"
 		font.pointSize: 50
 		font.bold: true
@@ -158,7 +158,7 @@ ApplicationWindow {
 		id: scan
 		x:1250
 		y:370
-		text: "Scan the QR code \n to connect \nto the Station"
+		text: "Scan the QR code \nto connect \nto the Station"
 		font.family: "Helvetica"
 		font.pointSize: 40
 		font.bold: true

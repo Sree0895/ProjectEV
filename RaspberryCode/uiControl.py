@@ -763,10 +763,10 @@ class Backend(QObject):
             TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
             TaskDict["evcsState"]= str(evcsInfo["evcsState"])
             TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
-            TaskDict["evcsName"]= "Statiion 1"
+            TaskDict["evcsName"]= "Station 2 - Gachibowli"
             TaskDict["evcsId"]= "EV002378"    
-            TaskDict["evcsLat"]= "17.459"
-            TaskDict["evcsLon"]= "78.349"
+            TaskDict["evcsLat"]= "17.4401"
+            TaskDict["evcsLon"]= "78.3489"
             TaskDict["TimeStamp"]= str((int)(time.time()))
                 
             TaskStr = json.dumps(TaskDict, indent = 4)
@@ -803,10 +803,10 @@ class Backend(QObject):
             TaskDict["evcsManufacturer"]= str(evcsInfo["evcsManufacturer"])
             TaskDict["evcsState"]= str(evcsInfo["evcsState"])
             TaskDict["evcsDistrict"]= str(evcsInfo["evcsDistrict"])
-            TaskDict["evcsName"]= "Station 2"
+            TaskDict["evcsName"]= "Station 2 - Gachibowli"
             TaskDict["evcsId"]= "EV002378"   
-            TaskDict["evcsLat"]= "17.459"
-            TaskDict["evcsLon"]= "78.349" 
+            TaskDict["evcsLat"]= "17.4401"
+            TaskDict["evcsLon"]= "78.3489" 
             TaskDict["TimeStamp"]= str((int)(time.time()))
             
             TaskStr = json.dumps(TaskDict, indent = 4)
@@ -1029,7 +1029,7 @@ beInstance.dispCurrTime()
 beInstance.dispCurrSlot("---")
 beInstance.dispNextSlot("---")
 beInstance.dispCost("TBD")
-beInstance.dispEvcsName(evcsInfo["evcsName"])
+beInstance.dispEvcsName(evcsInfo["evcsName"] + "," +evcsInfo["evcsDistrict"] +","+evcsInfo["evcsState"])
 beInstance.dispFreeSlots("---")
     
 beInstance.startTimers()
